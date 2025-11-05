@@ -1,0 +1,307 @@
+
+export const translations = {
+  en: {
+    
+    nav: {
+      home: 'Home',
+      events: 'Events',
+      createEvent: 'Create Event',
+      myEvents: 'My Events',
+      profile: 'Profile',
+      login: 'Login',
+      register: 'Register',
+      logout: 'Logout',
+      admin: 'Admin Panel',
+      myRegistrations: 'My Registrations'
+    },
+    
+    common: {
+      loading: 'Loading...',
+      error: 'Error',
+      success: 'Success',
+      cancel: 'Cancel',
+      save: 'Save',
+      delete: 'Delete',
+      edit: 'Edit',
+      create: 'Create',
+      back: 'Back',
+      search: 'Search',
+      filter: 'Filter',
+      clear: 'Clear',
+      submit: 'Submit',
+      confirm: 'Confirm',
+      close: 'Close',
+      viewDetails: 'View Details',
+      required: 'Required'
+    },
+    
+    
+    auth: {
+      welcomeBack: 'Welcome back',
+      signInToContinue: 'Sign in to your account to continue',
+      emailAddress: 'Email Address',
+      password: 'Password',
+      fullName: 'Full Name',
+      forgotPassword: 'Forgot password?',
+      signIn: 'Sign in',
+      signingIn: 'Signing in...',
+      dontHaveAccount: "Don't have an account?",
+      createNewAccount: 'Create new account',
+      alreadyHaveAccount: 'Already have an account?',
+      signUp: 'Sign up',
+      signingUp: 'Signing up...',
+      loginFailed: 'Login failed. Please check your credentials.',
+      registrationSuccess: 'Registration successful! Please login.',
+      registrationFailed: 'Registration failed. Please try again.',
+      invalidEmail: 'Invalid email address',
+      passwordTooShort: 'Password must be at least 6 characters',
+      passwordRequirements: 'Password must contain uppercase, lowercase, and number'
+    },
+    
+    events: {
+      title: 'Events',
+      allEvents: 'All Events',
+      upcomingEvents: 'Upcoming Events',
+      myEvents: 'My Events',
+      createEvent: 'Create Event',
+      createNewEvent: 'Create New Event',
+      editEvent: 'Edit Event',
+      eventDetails: 'Event Details',
+      eventTitle: 'Event Title',
+      description: 'Description',
+      category: 'Category',
+      date: 'Date',
+      time: 'Time',
+      location: 'Location',
+      capacity: 'Capacity',
+      coverImage: 'Cover Image',
+      coverUrl: 'Cover Image URL',
+      organizer: 'Organizer',
+      creatingEvent: 'Creating...',
+      updatingEvent: 'Updating...',
+      deletingEvent: 'Deleting...',
+      createEventSuccess: 'Event created successfully!',
+      updateEventSuccess: 'Event updated successfully!',
+      deleteEventSuccess: 'Event deleted successfully!',
+      createEventFailed: 'Failed to create event.',
+      updateEventFailed: 'Failed to update event.',
+      deleteEventFailed: 'Failed to delete event.',
+      noEventsFound: 'No events found',
+      searchEvents: 'Search events...',
+      filterByCategory: 'Filter by category',
+      filterByDate: 'Filter by date',
+      dateFrom: 'From',
+      dateTo: 'To',
+      latitude: 'Latitude',
+      longitude: 'Longitude',
+      availableSlots: 'Available slots',
+      soldOut: 'Sold out',
+      register: 'Register for Event',
+      cancelRegistration: 'Cancel Registration',
+      registered: 'Registered',
+      registering: 'Registering...',
+      cancelling: 'Cancelling...'
+    },
+    
+    
+    validation: {
+      titleRequired: 'Title is required',
+      titleLength: 'Title must be between 3 and 200 characters',
+      descriptionRequired: 'Description is required',
+      descriptionLength: 'Description must be between 10 and 4000 characters',
+      categoryRequired: 'Category is required',
+      dateRequired: 'Date is required',
+      timeRequired: 'Time is required',
+      locationRequired: 'Location is required',
+      locationLength: 'Location must be between 3 and 200 characters',
+      capacityMin: 'Capacity must be at least 1',
+      capacityMax: 'Capacity cannot exceed 100,000',
+      emailRequired: 'Email is required',
+      emailInvalid: 'Email must be valid',
+      passwordRequired: 'Password is required',
+      fullNameRequired: 'Full name is required',
+      fullNameLength: 'Full name must be between 2 and 100 characters'
+    },
+    
+    
+    registration: {
+      myRegistrations: 'My Registrations',
+      registrationSuccess: 'Successfully registered for the event!',
+      registrationFailed: 'Failed to register for event.',
+      cancellationSuccess: 'Registration cancelled successfully.',
+      cancellationFailed: 'Failed to cancel registration.',
+      alreadyRegistered: 'You are already registered for this event',
+      eventFull: 'Event has reached maximum capacity',
+      status: 'Status',
+      registeredAt: 'Registered At',
+      cancelledAt: 'Cancelled At'
+    },
+    
+    
+    analytics: {
+      eventAnalytics: 'Event Analytics',
+      totalRegistrations: 'Total Registrations',
+      activeRegistrations: 'Active Registrations',
+      cancelledRegistrations: 'Cancelled Registrations',
+      attendedCount: 'Attended',
+      registrationRate: 'Registration Rate',
+      cancellationRate: 'Cancellation Rate',
+      availableSlots: 'Available Slots',
+      viewAnalytics: 'View Analytics',
+      viewRegistrations: 'View Registrations'
+    }
+  },
+  
+  kk: {
+    
+    nav: {
+      home: 'Басты бет',
+      events: 'Іс-шаралар',
+      createEvent: 'Іс-шара құру',
+      myEvents: 'Менің іс-шараларым',
+      profile: 'Профиль',
+      login: 'Кіру',
+      register: 'Тіркелу',
+      logout: 'Шығу',
+      admin: 'Админ панелі',
+      myRegistrations: 'Менің тіркелімдерім'
+    },
+    
+    
+    common: {
+      loading: 'Жүктелуде...',
+      error: 'Қате',
+      success: 'Сәтті',
+      cancel: 'Болдырмау',
+      save: 'Сақтау',
+      delete: 'Жою',
+      edit: 'Өңдеу',
+      create: 'Құру',
+      back: 'Артқа',
+      search: 'Іздеу',
+      filter: 'Сүзгі',
+      clear: 'Тазалау',
+      submit: 'Жіберу',
+      confirm: 'Растау',
+      close: 'Жабу',
+      viewDetails: 'Толығырақ',
+      required: 'Міндетті'
+    },
+    
+   
+    auth: {
+      welcomeBack: 'Қайта келдіңіз',
+      signInToContinue: 'Жалғастыру үшін жүйеге кіріңіз',
+      emailAddress: 'Электрондық пошта',
+      password: 'Құпия сөз',
+      fullName: 'Толық аты-жөні',
+      forgotPassword: 'Құпия сөзді ұмыттыңыз ба?',
+      signIn: 'Кіру',
+      signingIn: 'Кіруде...',
+      dontHaveAccount: 'Аккаунтыңыз жоқ па?',
+      createNewAccount: 'Жаңа аккаунт құру',
+      alreadyHaveAccount: 'Аккаунтыңыз бар ма?',
+      signUp: 'Тіркелу',
+      signingUp: 'Тіркелуде...',
+      loginFailed: 'Кіру сәтсіз аяқталды. Деректеріңізді тексеріңіз.',
+      registrationSuccess: 'Тіркеу сәтті аяқталды! Кіріңіз.',
+      registrationFailed: 'Тіркеу сәтсіз аяқталды. Қайталап көріңіз.',
+      invalidEmail: 'Жарамсыз электрондық пошта',
+      passwordTooShort: 'Құпия сөз кемінде 6 таңбадан тұруы керек',
+      passwordRequirements: 'Құпия сөзде бас әріп, кіші әріп және сан болуы керек'
+    },
+    
+    
+    events: {
+      title: 'Іс-шаралар',
+      allEvents: 'Барлық іс-шаралар',
+      upcomingEvents: 'Алдағы іс-шаралар',
+      myEvents: 'Менің іс-шараларым',
+      createEvent: 'Іс-шара құру',
+      createNewEvent: 'Жаңа іс-шара құру',
+      editEvent: 'Іс-шараны өңдеу',
+      eventDetails: 'Іс-шара туралы',
+      eventTitle: 'Іс-шара атауы',
+      description: 'Сипаттама',
+      category: 'Санат',
+      date: 'Күні',
+      time: 'Уақыты',
+      location: 'Орны',
+      capacity: 'Орын саны',
+      coverImage: 'Мұқаба суреті',
+      coverUrl: 'Мұқаба суретінің сілтемесі',
+      organizer: 'Ұйымдастырушы',
+      creatingEvent: 'Құрылуда...',
+      updatingEvent: 'Жаңартылуда...',
+      deletingEvent: 'Жойылуда...',
+      createEventSuccess: 'Іс-шара сәтті құрылды!',
+      updateEventSuccess: 'Іс-шара сәтті жаңартылды!',
+      deleteEventSuccess: 'Іс-шара сәтті жойылды!',
+      createEventFailed: 'Іс-шараны құру сәтсіз аяқталды.',
+      updateEventFailed: 'Іс-шараны жаңарту сәтсіз аяқталды.',
+      deleteEventFailed: 'Іс-шараны жою сәтсіз аяқталды.',
+      noEventsFound: 'Іс-шаралар табылмады',
+      searchEvents: 'Іс-шараларды іздеу...',
+      filterByCategory: 'Санат бойынша сүзу',
+      filterByDate: 'Күн бойынша сүзу',
+      dateFrom: 'Бастап',
+      dateTo: 'Дейін',
+      latitude: 'Ендік',
+      longitude: 'Бойлық',
+      availableSlots: 'Бос орындар',
+      soldOut: 'Орын қалмады',
+      register: 'Тіркелу',
+      cancelRegistration: 'Тіркелуді болдырмау',
+      registered: 'Тіркелді',
+      registering: 'Тіркелуде...',
+      cancelling: 'Болдырмауда...'
+    },
+    
+    validation: {
+      titleRequired: 'Атау міндетті',
+      titleLength: 'Атау 3-тен 200 таңбаға дейін болуы керек',
+      descriptionRequired: 'Сипаттама міндетті',
+      descriptionLength: 'Сипаттама 10-нан 4000 таңбаға дейін болуы керек',
+      categoryRequired: 'Санат міндетті',
+      dateRequired: 'Күн міндетті',
+      timeRequired: 'Уақыт міндетті',
+      locationRequired: 'Орын міндетті',
+      locationLength: 'Орын 3-тен 200 таңбаға дейін болуы керек',
+      capacityMin: 'Орын саны кемінде 1 болуы керек',
+      capacityMax: 'Орын саны 100,000-нан аспауы керек',
+      emailRequired: 'Электрондық пошта міндетті',
+      emailInvalid: 'Электрондық пошта жарамды болуы керек',
+      passwordRequired: 'Құпия сөз міндетті',
+      fullNameRequired: 'Толық аты-жөні міндетті',
+      fullNameLength: 'Толық аты-жөні 2-ден 100 таңбаға дейін болуы керек'
+    },
+    
+    
+    registration: {
+      myRegistrations: 'Менің тіркелімдерім',
+      registrationSuccess: 'Іс-шараға сәтті тіркелдіңіз!',
+      registrationFailed: 'Іс-шараға тіркелу сәтсіз аяқталды.',
+      cancellationSuccess: 'Тіркелу сәтті болдырмалды.',
+      cancellationFailed: 'Тіркелуді болдырмау сәтсіз аяқталды.',
+      alreadyRegistered: 'Сіз бұл іс-шараға тіркелгенсіз',
+      eventFull: 'Іс-шара максималды орын санына жетті',
+      status: 'Күй',
+      registeredAt: 'Тіркелген уақыты',
+      cancelledAt: 'Болдырмалған уақыты'
+    },
+    
+    
+    analytics: {
+      eventAnalytics: 'Іс-шара аналитикасы',
+      totalRegistrations: 'Жалпы тіркелімдер',
+      activeRegistrations: 'Белсенді тіркелімдер',
+      cancelledRegistrations: 'Болдырмалған тіркелімдер',
+      attendedCount: 'Қатысқандар',
+      registrationRate: 'Тіркелу деңгейі',
+      cancellationRate: 'Болдырмау деңгейі',
+      availableSlots: 'Бос орындар',
+      viewAnalytics: 'Аналитиканы көру',
+      viewRegistrations: 'Тіркелімдерді көру'
+    }
+  }
+};

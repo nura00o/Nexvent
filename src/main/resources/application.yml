@@ -1,0 +1,4 @@
+logging:
+  level:
+    org.springdoc: DEBUG
+    io.swagger: DEBUG
