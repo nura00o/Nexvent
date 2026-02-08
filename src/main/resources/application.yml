@@ -1,4 +1,30 @@
-logging:
-  level:
-    org.springdoc: DEBUG
-    io.swagger: DEBUG
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/event_db
+    username: postgres
+    password: koikoi //на свой пароль в постгре поменяй
+    sql:
+      init:
+        mode: always
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.format_sql: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USER}
+    password: ${MAIL_PASS}
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    accessExpirationMs: 900000
+    refreshExpirationMs: 604800000

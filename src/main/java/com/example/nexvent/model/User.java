@@ -3,14 +3,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.Set;
 
-@Entity @Getter @Setter @NoArgsConstructor @AllArgsConstructor
-@Table(name="users")
+@Entity @Table(name="users")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
     private String email;
+
     private String password;
     private String fullName;
     private boolean enabled = true;
@@ -21,4 +22,5 @@ public class User {
             joinColumns=@JoinColumn(name="user_id"),
             inverseJoinColumns=@JoinColumn(name="role_id"))
     private Set<Role> roles;
+    private String deviceToken;
 }

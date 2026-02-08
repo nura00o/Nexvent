@@ -14,7 +14,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AnalyticsService {
-    
+
     private final EventRepository eventRepo;
     private final EventRegistrationRepository registrationRepo;
 
@@ -22,25 +22,31 @@ public class AnalyticsService {
         Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", eventId));
 
-        List<EventRegistration> allRegistrations = registrationRepo.findByEventOrderByRegisteredAtDesc(event);
-        
+        // ✅ правильный метод и сортировка
+        List<EventRegistration> allRegistrations =
+                registrationRepo.findByEventOrderByCreatedAtDesc(event);
+
         long totalRegistrations = allRegistrations.size();
+
         long activeRegistrations = allRegistrations.stream()
-                .filter(r -> r.getStatus() == EventRegistration.Status.REGISTERED)
-                .count();
-        long cancelledRegistrations = allRegistrations.stream()
-                .filter(r -> r.getStatus() == EventRegistration.Status.CANCELLED)
-                .count();
-        long attendedCount = allRegistrations.stream()
-                .filter(r -> r.getStatus() == EventRegistration.Status.ATTENDED)
+                .filter(r -> r.getStatus() == EventRegistration.Status.REGISTERED
+                        || r.getStatus() == EventRegistration.Status.PAID)
                 .count();
 
-        double registrationRate = event.getCapacity() != null && event.getCapacity() > 0
+        // ✅ если у тебя статус CANCELED (амер. вариант)
+        long canceledRegistrations = allRegistrations.stream()
+                .filter(r -> r.getStatus() == EventRegistration.Status.CANCELED)
+                .count();
+
+        // ✅ attended пока не поддерживаем (0)
+        long attendedCount = 0;
+
+        double registrationRate = (event.getCapacity() != null && event.getCapacity() > 0)
                 ? (activeRegistrations * 100.0) / event.getCapacity()
                 : 0.0;
 
         double cancellationRate = totalRegistrations > 0
-                ? (cancelledRegistrations * 100.0) / totalRegistrations
+                ? (canceledRegistrations * 100.0) / totalRegistrations
                 : 0.0;
 
         int availableSlots = event.getCapacity() != null
@@ -53,7 +59,7 @@ public class AnalyticsService {
                 event.getCapacity(),
                 totalRegistrations,
                 activeRegistrations,
-                cancelledRegistrations,
+                canceledRegistrations,
                 attendedCount,
                 Math.round(registrationRate * 100.0) / 100.0,
                 Math.round(cancellationRate * 100.0) / 100.0,

@@ -1,33 +1,27 @@
 package com.example.nexvent.model;
+
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
 
-@Entity @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Entity
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id","event_id"}))
 public class EventRegistration {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
+    @ManyToOne(optional = false) private User user;
+    @ManyToOne(optional = false) private Event event;
+    @OneToOne(mappedBy = "registration", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Ticket ticket;
+
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.REGISTERED;
+    private Instant createdAt = Instant.now();
 
-    private String ticketQrPath;
-    private Instant registeredAt = Instant.now();
-    private Instant cancelledAt;
+    private Long unitPrice = 0L;
 
-    public enum Status {
-        REGISTERED,
-        CANCELLED,
-        ATTENDED
-    }
+    public enum Status { REGISTERED, CANCELED, PAID }
 }

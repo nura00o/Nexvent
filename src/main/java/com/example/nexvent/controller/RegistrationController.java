@@ -1,48 +1,46 @@
 package com.example.nexvent.controller;
 
-import com.example.nexvent.dto.RegistrationResponse;
+import com.example.nexvent.dto.RegistrationDto;
+import com.example.nexvent.model.User;
+import com.example.nexvent.service.CurrentUser;
 import com.example.nexvent.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/registrations")
 @RequiredArgsConstructor
 public class RegistrationController {
-    
+
     private final RegistrationService registrationService;
+    private final CurrentUser currentUser;
 
     @PostMapping("/events/{eventId}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RegistrationResponse register(
-            @PathVariable Long eventId, 
-            Authentication auth) {
-        return registrationService.registerForEvent(eventId, auth.getName());
+    public RegistrationDto register(@PathVariable Long eventId, Authentication auth) {
+        User me = currentUser.get(auth);
+        return registrationService.register(me, eventId);
     }
 
-    @DeleteMapping("/events/{eventId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancel(
-            @PathVariable Long eventId, 
-            Authentication auth) {
-        registrationService.cancelRegistration(eventId, auth.getName());
+    @GetMapping("/my")
+    public List<RegistrationDto> my(Authentication auth) {
+        User me = currentUser.get(auth);
+        return registrationService.myRegistrations(me);
     }
 
-    @GetMapping("/my-registrations")
-    public List<RegistrationResponse> getMyRegistrations(Authentication auth) {
-        return registrationService.getUserRegistrations(auth.getName());
+    @PatchMapping("/{registrationId}/cancel")
+    public void cancel(@PathVariable Long registrationId, Authentication auth) {
+        User me = currentUser.get(auth);
+        registrationService.cancel(me, registrationId);
     }
 
-    @GetMapping("/events/{eventId}/check")
-    public Map<String, Boolean> checkRegistration(
-            @PathVariable Long eventId, 
-            Authentication auth) {
-        boolean isRegistered = registrationService.isUserRegistered(eventId, auth.getName());
-        return Map.of("isRegistered", isRegistered);
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PatchMapping("/{registrationId}/mark-paid")
+    public void markPaid(@PathVariable Long registrationId, Authentication auth) {
+        User me = currentUser.get(auth);
+        registrationService.markPaid(registrationId, me);
     }
 }

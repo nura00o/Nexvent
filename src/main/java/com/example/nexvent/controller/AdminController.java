@@ -1,29 +1,49 @@
 package com.example.nexvent.controller;
 
-import com.example.nexvent.model.Category;
-import com.example.nexvent.repository.CategoryRepository;
+import com.example.nexvent.dto.SetRolesRequest;
+import com.example.nexvent.dto.UserSummaryDto;
 import com.example.nexvent.service.AdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
 
-@RestController @RequestMapping("/api/admin") @RequiredArgsConstructor
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AdminController {
-  private final AdminService admin;
-  private final CategoryRepository cats;
+    private final AdminService admin;
 
-  @GetMapping("/stats/overview")
-  public Map<String,Object> overview() { return admin.overview(); }
+    @GetMapping("/users")
+    public List<UserSummaryDto> users() {
+        return admin.listUsers();
+    }
 
-  @PostMapping("/categories")
-  public Category createCategory(@RequestParam String name) {
-    Category c = new Category(); c.setName(name);
-    return cats.save(c);
-  }
+    @PatchMapping("/users/{id}/grant-organizer")
+    public UserSummaryDto grantOrganizer(@PathVariable Long id, Authentication auth) {
+        return admin.grantOrganizer(id, auth);
+    }
 
-  @PatchMapping("/users/{id}/lock")
-  public void lock(@PathVariable Long id) { admin.setLock(id, true); }
+    @PatchMapping("/users/{id}/revoke-organizer")
+    public UserSummaryDto revokeOrganizer(@PathVariable Long id, Authentication auth) {
+        return admin.revokeOrganizer(id, auth);
+    }
 
-  @PatchMapping("/users/{id}/unlock")
-  public void unlock(@PathVariable Long id) { admin.setLock(id, false); }
+    @PutMapping("/users/{id}/roles")
+    public UserSummaryDto setRoles(@PathVariable Long id, @RequestBody SetRolesRequest req, Authentication auth) {
+        return admin.setRoles(id, req, auth);
+    }
+
+    @PatchMapping("/users/{id}/lock")
+    public UserSummaryDto lock(@PathVariable Long id, Authentication auth) {
+        return admin.lockUser(id, auth);
+    }
+
+    @PatchMapping("/users/{id}/unlock")
+    public UserSummaryDto unlock(@PathVariable Long id) {
+        return admin.unlockUser(id);
+    }
 }

@@ -1,16 +1,15 @@
 package com.example.nexvent.service;
 
-import com.example.nexvent.dto.EventRequest;
-import com.example.nexvent.dto.EventResponse;
+import com.example.nexvent.dto.*;
 import com.example.nexvent.model.*;
 import com.example.nexvent.repository.*;
-import com.example.nexvent.util.EventSpecs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -18,71 +17,80 @@ import java.time.LocalTime;
 public class EventService {
     private final EventRepository events;
     private final CategoryRepository categories;
-    private final UserRepository users;
 
-    public Page<EventResponse> search(String category, String dateFrom, String dateTo, Pageable pageable) {
-        Specification<Event> spec = EventSpecs.published();
-        if (category != null && !category.isBlank()) spec = spec.and(EventSpecs.byCategoryName(category));
-        if (dateFrom != null && !dateFrom.isBlank()) spec = spec.and(EventSpecs.dateFrom(LocalDate.parse(dateFrom)));
-        if (dateTo != null && !dateTo.isBlank()) spec = spec.and(EventSpecs.dateTo(LocalDate.parse(dateTo)));
-        return events.findAll(spec, pageable).map(this::toDto);
+    // Публичный список (только published)
+    public Page<EventResponse> publicList(Pageable pageable) {
+        return events.findByPublishedTrue(pageable).map(this::map);
     }
 
-    public EventResponse get(Long id) {
-        return events.findById(id).map(this::toDto)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    // Список организатора — строго по текущему пользователю
+    public Page<EventResponse> myEvents(User organizer, Pageable pageable) {
+        return events.findByOrganizer(organizer, pageable).map(this::map);
     }
 
-    public EventResponse create(EventRequest req, String organizerEmail) {
-        Event e = fromReq(new Event(), req);
-        e.setOrganizer(users.findByEmail(organizerEmail).orElseThrow());
-        e.setCategory(categories.findById(req.categoryId())
-                .orElseThrow(() ->
-    new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category with id " + req.categoryId() + " not found")));
-                
-        return toDto(events.save(e));
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    public EventResponse create(EventRequest req, User organizer) {
+        Event e = new Event();
+        apply(e, req);
+        e.setOrganizer(organizer);
+        e = events.save(e);
+        return map(e);
     }
 
-    public EventResponse update(Long id, EventRequest req, String organizerEmail) {
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    public EventResponse update(Long id, EventRequest req, User organizer) {
         Event e = events.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (!e.getOrganizer().getEmail().equals(organizerEmail))
+        // Защита: только владелец события или админ
+        if (!e.getOrganizer().getId().equals(organizer.getId()) &&
+                organizer.getRoles().stream().noneMatch(r -> r.getName().equals("ROLE_ADMIN"))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        e = fromReq(e, req);
-        e.setCategory(categories.findById(req.categoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,"Bad category")));
-        return toDto(events.save(e));
+        }
+        apply(e, req);
+        e = events.save(e);
+        return map(e);
     }
 
-    public void delete(Long id, String organizerEmail) {
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    public void delete(Long id, User organizer) {
         Event e = events.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (!e.getOrganizer().getEmail().equals(organizerEmail))
+        if (!e.getOrganizer().getId().equals(organizer.getId()) &&
+                organizer.getRoles().stream().noneMatch(r -> r.getName().equals("ROLE_ADMIN"))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         events.delete(e);
     }
 
-    private Event fromReq(Event e, EventRequest r) {
-        e.setTitle(r.title());
-        e.setDescription(r.description());
-        e.setDate(LocalDate.parse(r.date()));
-        e.setTime(LocalTime.parse(r.time()));
-        e.setLocation(r.location());
-        e.setLatitude(r.latitude());
-        e.setLongitude(r.longitude());
-        e.setCapacity(r.capacity());
-        e.setCoverUrl(r.coverUrl());
-        e.setPublished(true);
-        return e;
+    public EventResponse get(Long id) {
+        return events.findById(id).map(this::map).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    private EventResponse toDto(Event e) {
+    private void apply(Event e, EventRequest req) {
+        e.setTitle(req.title());
+        e.setDescription(req.description());
+        e.setCategory(categories.findById(req.categoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid category")));
+        e.setDate(LocalDate.parse(req.date()));
+        e.setTime(LocalTime.parse(req.time()));
+        e.setLocation(req.location());
+        e.setLatitude(req.latitude());
+        e.setLongitude(req.longitude());
+        e.setCapacity(req.capacity());
+        if (req.published() != null) e.setPublished(req.published());
+        e.setCoverUrl(req.coverUrl());
+
+        e.setPrice(req.price() == null ? 0L : req.price());
+    }
+
+    private EventResponse map(Event e) {
         return new EventResponse(
-                e.getId(), e.getTitle(), e.getDescription(),
-                e.getCategory()!=null? e.getCategory().getName(): null,
-                e.getDate()!=null? e.getDate().toString(): null,
-                e.getTime()!=null? e.getTime().toString(): null,
+                e.getId(), e.getTitle(), e.getDescription(), e.getCategory().getName(),
+                e.getDate().toString(),
+                e.getTime() != null ? e.getTime().toString() : null,
                 e.getLocation(), e.getLatitude(), e.getLongitude(),
-                e.getCapacity(), e.isPublished(), e.getCoverUrl(),
-                e.getOrganizer()!=null? e.getOrganizer().getId(): null
+                e.getCapacity(), e.isPublished(),
+                e.getPrice(),
+                e.getCoverUrl(),
+                e.getOrganizer().getId()
         );
     }
 }
