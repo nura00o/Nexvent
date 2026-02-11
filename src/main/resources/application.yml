@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/event_db
+    url: jdbc:postgresql://localhost:5432/Nexvent
     username: postgres
     password: koikoi //на свой пароль в постгре поменяй
     sql:
@@ -22,6 +22,10 @@ spring:
     properties.mail.smtp:
       auth: true
       starttls.enable: true
+  management:
+    health:
+      mail:
+        enabled: false
 
 app:
   jwt:

@@ -40,4 +40,5 @@ public class AuthController {
         users.finishReset(req);
         return ResponseEntity.ok().build();
     }
+
 }
