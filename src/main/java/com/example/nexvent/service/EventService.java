@@ -28,7 +28,7 @@ public class EventService {
         return events.findByOrganizer(organizer, pageable).map(this::map);
     }
 
-    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ORGANIZER','ROLE_ADMIN')")
     public EventResponse create(EventRequest req, User organizer) {
         Event e = new Event();
         apply(e, req);
@@ -37,7 +37,7 @@ public class EventService {
         return map(e);
     }
 
-    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ORGANIZER','ROLE_ADMIN')")
     public EventResponse update(Long id, EventRequest req, User organizer) {
         Event e = events.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         // Защита: только владелец события или админ
@@ -50,7 +50,7 @@ public class EventService {
         return map(e);
     }
 
-    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ORGANIZER','ROLE_ADMIN')")
     public void delete(Long id, User organizer) {
         Event e = events.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!e.getOrganizer().getId().equals(organizer.getId()) &&

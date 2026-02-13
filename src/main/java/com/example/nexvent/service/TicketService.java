@@ -15,7 +15,6 @@ public class TicketService {
     private final TicketRepository tickets;
 
     public Ticket issueFor(EventRegistration reg) {
-        // если билет уже есть — не создаём второй
         if (reg.getTicket() != null) return reg.getTicket();
 
         Ticket t = new Ticket();
@@ -25,7 +24,6 @@ public class TicketService {
         String code = UUID.randomUUID().toString().replace("-", "");
         t.setTicketCode(code);
 
-        // QR-данные: можно сделать простую строку (потом можно шифровать/подписывать)
         t.setQrData("ticket:" + code + "|event:" + reg.getEvent().getId() + "|user:" + reg.getUser().getId());
 
         return tickets.save(t);

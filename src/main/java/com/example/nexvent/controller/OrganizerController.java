@@ -45,7 +45,6 @@ public class OrganizerController {
         return ResponseEntity.noContent().build();
     }
 
-    // список регистраций на Моё конкретное событие
     @GetMapping("/events/{id}/registrations")
     public List<RegistrationDto> registrations(@PathVariable Long id, Authentication auth) {
         return regs.forEvent(id, current.get(auth));

@@ -23,7 +23,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/api/events/**").permitAll() // публичный просмотр событий
+                        .requestMatchers("/api/events/**").permitAll()
                         .requestMatchers("/api/organizer/**").hasAnyRole("ORGANIZER","ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
