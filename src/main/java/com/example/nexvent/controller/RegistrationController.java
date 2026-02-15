@@ -37,7 +37,7 @@ public class RegistrationController {
         registrationService.cancel(me, registrationId);
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ORGANIZER','ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @PatchMapping("/{registrationId}/mark-paid")
     public void markPaid(@PathVariable Long registrationId, Authentication auth) {
         User me = currentUser.get(auth);
