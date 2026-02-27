@@ -1,28 +1,39 @@
 import api from './api'
 
+/**
+ * User-facing registration service.
+ * Endpoints match the backend RegistrationController (under /api/registrations).
+ */
 const registrationService = {
-  // Register for an event
+  /**
+   * POST /api/registrations/events/{eventId}
+   * Register the current user for an event.
+   * @returns {Promise<RegistrationDto>} { id, eventId, eventTitle, status, unitPrice }
+   */
   registerForEvent: async (eventId) => {
     const response = await api.post(`/registrations/events/${eventId}`)
     return response.data
   },
 
-  // Cancel registration
-  cancelRegistration: async (eventId) => {
-    await api.delete(`/registrations/events/${eventId}`)
-  },
-
-  // Get user's registrations
+  /**
+   * GET /api/registrations/my
+   * Fetch all registrations for the current user.
+   * @returns {Promise<RegistrationDto[]>}
+   */
   getMyRegistrations: async () => {
-    const response = await api.get('/registrations/my-registrations')
+    const response = await api.get('/registrations/my')
     return response.data
   },
 
-  // Check if user is registered for an event
-  checkRegistration: async (eventId) => {
-    const response = await api.get(`/registrations/events/${eventId}/check`)
-    return response.data.isRegistered
-  }
+  /**
+   * PATCH /api/registrations/{registrationId}/cancel
+   * Cancel a registration by its ID (not the event ID).
+   * @param {number} registrationId
+   */
+  cancelRegistration: async (registrationId) => {
+    await api.patch(`/registrations/${registrationId}/cancel`)
+  },
 }
 
 export default registrationService
+

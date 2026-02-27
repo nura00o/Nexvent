@@ -1,92 +1,95 @@
 import api from './api'
+import { setTokens, clearTokens, getUserFromToken } from './tokenService'
 
+/**
+ * Auth service — all authentication API calls.
+ * Endpoints match the backend AuthController exactly.
+ */
 const authService = {
-  // Register new user
-  register: async (fullName, email, password) => {
-    const response = await api.post('/auth/register', { fullName, email, password })
-    return response.data
+  /**
+   * Register a new user.
+   * POST /api/auth/register  →  201 Created (no body)
+   * @param {{ fullName: string, email: string, password: string }} data
+   */
+  register: async (data) => {
+    await api.post('/auth/register', {
+      fullName: data.fullName,
+      email: data.email,
+      password: data.password,
+    })
   },
 
-  // Login user
-  // In authService.js, update the login function:
-login: async (email, password) => {
-  const response = await api.post('/auth/login', { email, password })
-  if (response.data.accessToken) {
-    localStorage.setItem('token', response.data.accessToken)
-    // Save the entire user data including roles
-    localStorage.setItem('user', JSON.stringify(response.data.user))
-  }
-  return response.data
-},
+  /**
+   * Login — returns TokenResponse { accessToken, refreshToken }.
+   * Stores both tokens via tokenService.
+   * POST /api/auth/login
+   * @param {{ email: string, password: string }} data
+   * @returns {Promise<{ email: string, roles: string[], exp: number } | null>}
+   */
+  login: async (data) => {
+    const response = await api.post('/auth/login', {
+      email: data.email,
+      password: data.password,
+    })
 
-// Update getCurrentUser to include roles
-getCurrentUser: () => {
-  const token = localStorage.getItem('token')
-  const userStr = localStorage.getItem('user')
-  
-  if (!token || !userStr) return null
-  
-  try {
-    const user = JSON.parse(userStr)
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    
-    return {
-      ...user,
-      exp: payload.exp
-    }
-  } catch (error) {
-    console.error('Error parsing user data:', error)
-    return null
-  }
-},
+    const { accessToken, refreshToken } = response.data
+    setTokens(accessToken, refreshToken)
 
-  // Forgot password - initiate reset
-  forgotPassword: async (email) => {
-    const response = await api.post(`/auth/forgot-password?email=${email}`)
-    return response.data
+    return getUserFromToken()
   },
 
-  // Reset password with token
-  resetPassword: async (token, newPassword) => {
-    const response = await api.post(`/auth/reset-password?token=${token}&newPassword=${newPassword}`)
-    return response.data
+  /**
+   * Refresh tokens using the refresh token.
+   * POST /api/auth/refresh?refreshToken=...
+   * @param {string} refreshToken
+   * @returns {Promise<{ email: string, roles: string[], exp: number } | null>}
+   */
+  refresh: async (refreshToken) => {
+    const response = await api.post(
+      `/auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`,
+    )
+
+    const { accessToken: newAccess, refreshToken: newRefresh } = response.data
+    setTokens(newAccess, newRefresh)
+
+    return getUserFromToken()
   },
 
-  // Logout (client-side only)
+  /**
+   * Start password reset — sends a code to the user's email.
+   * POST /api/auth/reset/start  →  200 OK (no body)
+   * @param {{ email: string }} data
+   */
+  resetStart: async (data) => {
+    await api.post('/auth/reset/start', { email: data.email })
+  },
+
+  /**
+   * Finish password reset — verifies code and sets new password.
+   * POST /api/auth/reset/finish  →  200 OK (no body)
+   * @param {{ email: string, code: string, newPassword: string }} data
+   */
+  resetFinish: async (data) => {
+    await api.post('/auth/reset/finish', {
+      email: data.email,
+      code: data.code,
+      newPassword: data.newPassword,
+    })
+  },
+
+  /**
+   * Logout — clears all tokens.
+   */
   logout: () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearTokens()
   },
 
-  // Get current user from token
+  /**
+   * Get current user from in-memory access token.
+   * @returns {{ email: string, roles: string[], exp: number } | null}
+   */
   getCurrentUser: () => {
-    const token = localStorage.getItem('token')
-    if (!token) return null
-    
-    try {
-      // Decode JWT token to get user info
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      return {
-        email: payload.sub,
-        exp: payload.exp,
-      }
-    } catch (error) {
-      return null
-    }
-  },
-
-  // Check if user has specific role
-  hasRole: (role) => {
-    const token = localStorage.getItem('token')
-    if (!token) return false
-    
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      // In Spring Security, roles are stored in authorities
-      return payload.authorities?.includes(role) || false
-    } catch (error) {
-      return false
-    }
+    return getUserFromToken()
   },
 }
 

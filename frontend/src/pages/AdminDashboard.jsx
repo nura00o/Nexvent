@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import adminService from '../services/adminService'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { Users, Calendar, TrendingUp, Shield, PlusCircle, AlertCircle } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Shield, PlusCircle, AlertCircle, ArrowRight } from 'lucide-react'
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null)
@@ -31,7 +32,7 @@ const AdminDashboard = () => {
     e.preventDefault()
     setCategoryError('')
     setCategorySuccess('')
-    
+
     if (!categoryName.trim()) {
       setCategoryError('Category name is required')
       return
@@ -100,7 +101,7 @@ const AdminDashboard = () => {
       {/* Category Management */}
       <div className="card mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Category Management</h2>
-        
+
         {categorySuccess && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-2">
             <AlertCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -140,17 +141,22 @@ const AdminDashboard = () => {
 
       {/* User Management Section */}
       <div className="card">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">User Management</h2>
-        <p className="text-gray-600 mb-4">
-          User lock/unlock functionality is available through the API. To manage users:
-        </p>
-        <ul className="list-disc list-inside space-y-2 text-gray-700">
-          <li>Lock a user: <code className="bg-gray-100 px-2 py-1 rounded text-sm">PATCH /api/admin/users/:id/lock</code></li>
-          <li>Unlock a user: <code className="bg-gray-100 px-2 py-1 rounded text-sm">PATCH /api/admin/users/:id/unlock</code></li>
-        </ul>
-        <p className="text-sm text-gray-600 mt-4">
-          Note: A full user management UI can be implemented as needed with user listing, search, and inline lock/unlock actions.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">User Management</h2>
+            <p className="text-gray-600">
+              View, search, and manage all platform users — roles, lock status, and organizer access.
+            </p>
+          </div>
+          <Link
+            to="/admin/users"
+            className="btn-primary flex items-center gap-2 whitespace-nowrap"
+          >
+            <Users className="h-5 w-5" />
+            <span>Manage Users</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </div>
   )

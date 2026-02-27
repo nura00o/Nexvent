@@ -7,7 +7,6 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [resetToken, setResetToken] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
@@ -17,11 +16,10 @@ const ForgotPassword = () => {
     setLoading(true)
 
     try {
-      const response = await authService.forgotPassword(email)
-      setResetToken(response.resetToken)
+      await authService.resetStart({ email })
       setSuccess(true)
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset link. Please try again.')
+      setError(err.response?.data?.message || 'Failed to send reset code. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -36,7 +34,7 @@ const ForgotPassword = () => {
             <span className="text-3xl font-bold text-gray-900">Nexvent</span>
           </Link>
           <h2 className="text-2xl font-bold text-gray-900">Forgot password?</h2>
-          <p className="text-gray-600 mt-2">No worries, we'll send you reset instructions</p>
+          <p className="text-gray-600 mt-2">No worries, we'll send you a reset code</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-xl p-8">
@@ -52,15 +50,17 @@ const ForgotPassword = () => {
               <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
                 <p className="text-sm text-green-800 mb-4">
-                  Password reset instructions have been sent!
+                  A reset code has been sent to your email!
                 </p>
-                <p className="text-xs text-gray-600 mb-2">Your reset token:</p>
-                <div className="bg-gray-100 p-3 rounded border border-gray-300 font-mono text-sm break-all">
-                  {resetToken}
-                </div>
+                <p className="text-xs text-gray-600">
+                  Check your inbox and use the code on the next page.
+                </p>
               </div>
-              <Link to={`/reset-password?token=${resetToken}`} className="btn-primary inline-block mb-3">
-                Reset Password Now
+              <Link
+                to={`/reset-password?email=${encodeURIComponent(email)}`}
+                className="btn-primary inline-block mb-3"
+              >
+                Enter Reset Code
               </Link>
               <div>
                 <Link to="/login" className="text-sm text-primary-600 hover:text-primary-700">
@@ -94,7 +94,7 @@ const ForgotPassword = () => {
                   disabled={loading}
                   className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Sending...' : 'Send reset link'}
+                  {loading ? 'Sending...' : 'Send reset code'}
                 </button>
               </form>
 

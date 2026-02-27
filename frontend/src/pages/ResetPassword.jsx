@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import authService from '../services/authService'
-import { Calendar, Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { Calendar, Lock, Mail, Hash, AlertCircle, CheckCircle } from 'lucide-react'
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams()
-  const [token, setToken] = useState('')
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -14,9 +15,9 @@ const ResetPassword = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const tokenFromUrl = searchParams.get('token')
-    if (tokenFromUrl) {
-      setToken(tokenFromUrl)
+    const emailFromUrl = searchParams.get('email')
+    if (emailFromUrl) {
+      setEmail(emailFromUrl)
     }
   }, [searchParams])
 
@@ -34,21 +35,26 @@ const ResetPassword = () => {
       return
     }
 
-    if (!token) {
-      setError('Reset token is missing')
+    if (!code.trim()) {
+      setError('Reset code is required')
+      return
+    }
+
+    if (!email.trim()) {
+      setError('Email is required')
       return
     }
 
     setLoading(true)
 
     try {
-      await authService.resetPassword(token, password)
+      await authService.resetFinish({ email, code: code.trim(), newPassword: password })
       setSuccess(true)
       setTimeout(() => {
         navigate('/login')
       }, 2000)
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reset password. Token may be invalid or expired.')
+      setError(err.response?.data?.message || 'Failed to reset password. Code may be invalid or expired.')
     } finally {
       setLoading(false)
     }
@@ -63,7 +69,7 @@ const ResetPassword = () => {
             <span className="text-3xl font-bold text-gray-900">Nexvent</span>
           </Link>
           <h2 className="text-2xl font-bold text-gray-900">Reset your password</h2>
-          <p className="text-gray-600 mt-2">Enter your new password below</p>
+          <p className="text-gray-600 mt-2">Enter the code from your email and set a new password</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-xl p-8">
@@ -84,20 +90,41 @@ const ResetPassword = () => {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="token" className="block text-sm font-medium text-gray-700 mb-2">
-                  Reset Token
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
                 </label>
-                <input
-                  id="token"
-                  type="text"
-                  required
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="input-field font-mono text-sm"
-                  placeholder="Enter reset token"
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input-field pl-10"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
+                  Reset Code
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    id="code"
+                    type="text"
+                    required
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="input-field pl-10 font-mono"
+                    placeholder="Enter code from email"
+                  />
+                </div>
               </div>
 
               <div>

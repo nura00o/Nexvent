@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import analyticsService from '../services/analyticsService';
+import organizerService from '../services/organizerService';
 import { useLanguage } from '../contexts/LanguageContext';
-import { 
-  BarChart3, Users, UserX, UserCheck, TrendingUp, TrendingDown, 
-  ArrowLeft, Calendar 
+import {
+  BarChart3, Users, UserX, UserCheck, TrendingUp, TrendingDown,
+  ArrowLeft, Calendar
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -25,7 +25,7 @@ const EventAnalytics = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const data = await analyticsService.getEventAnalytics(id);
+      const data = await organizerService.getEventAnalytics(id);
       setAnalytics(data);
     } catch (err) {
       setError(err);
@@ -36,7 +36,7 @@ const EventAnalytics = () => {
 
   const fetchRegistrations = async () => {
     try {
-      const data = await analyticsService.getEventRegistrations(id);
+      const data = await organizerService.getEventRegistrations(id);
       setRegistrations(data);
     } catch (err) {
       console.error('Failed to fetch registrations:', err);
@@ -169,13 +169,12 @@ const EventAnalytics = () => {
                     <td className="py-3 px-4 text-sm text-gray-900">{reg.userFullName}</td>
                     <td className="py-3 px-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          reg.status === 'REGISTERED'
-                            ? 'bg-green-100 text-green-800'
-                            : reg.status === 'CANCELLED'
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${reg.status === 'REGISTERED'
+                          ? 'bg-green-100 text-green-800'
+                          : reg.status === 'CANCELLED'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-blue-100 text-blue-800'
-                        }`}
+                          }`}
                       >
                         {reg.status}
                       </span>

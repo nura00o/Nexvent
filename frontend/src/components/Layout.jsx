@@ -6,7 +6,7 @@ import LanguageSwitcher from './LanguageSwitcher'
 import { Calendar, Home, PlusCircle, LayoutDashboard, User, LogOut, Menu, X, Ticket } from 'lucide-react'
 
 const Layout = () => {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth()
+  const { user, isAuthenticated, isAdmin, isOrganizer, logout } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -43,29 +43,31 @@ const Layout = () => {
                     <Calendar className="h-5 w-5" />
                     <span>{t('nav.myEvents')}</span>
                   </Link>
-                  
+
                   <Link to="/my-registrations" className="flex items-center space-x-1 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 transition">
                     <Ticket className="h-5 w-5" />
                     <span>{t('nav.myRegistrations')}</span>
                   </Link>
-                  
-                  <Link to="/events/create" className="flex items-center space-x-1 px-3 py-2 rounded-md text-primary-600 hover:bg-primary-50 transition">
-                    <PlusCircle className="h-5 w-5" />
-                    <span>{t('nav.createEvent')}</span>
-                  </Link>
-                  
+
+                  {(isOrganizer() || isAdmin()) && (
+                    <Link to="/events/create" className="flex items-center space-x-1 px-3 py-2 rounded-md text-primary-600 hover:bg-primary-50 transition">
+                      <PlusCircle className="h-5 w-5" />
+                      <span>{t('nav.createEvent')}</span>
+                    </Link>
+                  )}
+
                   {isAdmin() && (
                     <Link to="/admin" className="flex items-center space-x-1 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 transition">
                       <LayoutDashboard className="h-5 w-5" />
                       <span>{t('nav.admin')}</span>
                     </Link>
                   )}
-                  
+
                   <Link to="/profile" className="flex items-center space-x-1 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100 transition">
                     <User className="h-5 w-5" />
                     <span>{t('nav.profile')}</span>
                   </Link>
-                  
+
                   <button onClick={handleLogout} className="flex items-center space-x-1 px-3 py-2 rounded-md text-red-600 hover:bg-red-50 transition">
                     <LogOut className="h-5 w-5" />
                     <span>{t('nav.logout')}</span>
@@ -83,7 +85,7 @@ const Layout = () => {
                   </Link>
                 </>
               )}
-              
+
               <LanguageSwitcher />
             </div>
 
@@ -119,21 +121,23 @@ const Layout = () => {
                       <span>{t('nav.myEvents')}</span>
                     </div>
                   </Link>
-                  
+
                   <Link to="/my-registrations" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>
                     <div className="flex items-center space-x-2">
                       <Ticket className="h-5 w-5" />
                       <span>{t('nav.myRegistrations')}</span>
                     </div>
                   </Link>
-                  
-                  <Link to="/events/create" className="block px-3 py-2 rounded-md text-primary-600 hover:bg-primary-50" onClick={() => setMobileMenuOpen(false)}>
-                    <div className="flex items-center space-x-2">
-                      <PlusCircle className="h-5 w-5" />
-                      <span>{t('nav.createEvent')}</span>
-                    </div>
-                  </Link>
-                  
+
+                  {(isOrganizer() || isAdmin()) && (
+                    <Link to="/events/create" className="block px-3 py-2 rounded-md text-primary-600 hover:bg-primary-50" onClick={() => setMobileMenuOpen(false)}>
+                      <div className="flex items-center space-x-2">
+                        <PlusCircle className="h-5 w-5" />
+                        <span>{t('nav.createEvent')}</span>
+                      </div>
+                    </Link>
+                  )}
+
                   {isAdmin() && (
                     <Link to="/admin" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>
                       <div className="flex items-center space-x-2">
@@ -142,14 +146,14 @@ const Layout = () => {
                       </div>
                     </Link>
                   )}
-                  
+
                   <Link to="/profile" className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>
                     <div className="flex items-center space-x-2">
                       <User className="h-5 w-5" />
                       <span>{t('nav.profile')}</span>
                     </div>
                   </Link>
-                  
+
                   <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full text-left px-3 py-2 rounded-md text-red-600 hover:bg-red-50">
                     <div className="flex items-center space-x-2">
                       <LogOut className="h-5 w-5" />
