@@ -63,6 +63,22 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }, [])
 
+  /**
+   * Re-fetch a fresh token pair and sync user state with the server's current roles.
+   * Call this on pages where role information needs to be up-to-date (e.g. Profile).
+   * @returns {Promise<void>}
+   */
+  const refreshUser = useCallback(async () => {
+    const refreshToken = getRefreshToken()
+    if (!refreshToken) return
+    try {
+      const updatedUser = await authService.refresh(refreshToken)
+      setUser(updatedUser)
+    } catch {
+      // Refresh failed silently — leave stale data, don't log out
+    }
+  }, [])
+
   const isAuthenticated = useCallback(() => {
     return user !== null
   }, [user])
@@ -81,6 +97,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,
     isAuthenticated,
     isAdmin,
     isOrganizer,

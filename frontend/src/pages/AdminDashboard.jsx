@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import adminService from '../services/adminService'
+import { useLanguage } from '../contexts/LanguageContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { Users, Calendar, TrendingUp, Shield, PlusCircle, AlertCircle, ArrowRight } from 'lucide-react'
 
 const AdminDashboard = () => {
+  const { t } = useLanguage()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [categoryName, setCategoryName] = useState('')
@@ -34,17 +36,17 @@ const AdminDashboard = () => {
     setCategorySuccess('')
 
     if (!categoryName.trim()) {
-      setCategoryError('Category name is required')
+      setCategoryError(t('admin.categoryRequired'))
       return
     }
 
     setCreatingCategory(true)
     try {
       await adminService.createCategory(categoryName)
-      setCategorySuccess(`Category "${categoryName}" created successfully!`)
+      setCategorySuccess(t('admin.categorySuccess').replace('{{name}}', categoryName))
       setCategoryName('')
     } catch (error) {
-      setCategoryError(error.response?.data?.message || 'Failed to create category')
+      setCategoryError(error.response?.data?.message || t('admin.failedToCreateCategory'))
     } finally {
       setCreatingCategory(false)
     }
@@ -63,8 +65,8 @@ const AdminDashboard = () => {
       <div className="flex items-center space-x-3 mb-8">
         <Shield className="h-8 w-8 text-primary-600" />
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your platform</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('admin.dashboardTitle')}</h1>
+          <p className="text-gray-600">{t('admin.dashboardSubtitle')}</p>
         </div>
       </div>
 
@@ -76,7 +78,7 @@ const AdminDashboard = () => {
             <TrendingUp className="h-5 w-5 opacity-60" />
           </div>
           <h3 className="text-2xl font-bold mb-1">{stats?.users || 0}</h3>
-          <p className="text-blue-100">Total Users</p>
+          <p className="text-blue-100">{t('admin.totalUsers')}</p>
         </div>
 
         <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
@@ -85,7 +87,7 @@ const AdminDashboard = () => {
             <TrendingUp className="h-5 w-5 opacity-60" />
           </div>
           <h3 className="text-2xl font-bold mb-1">{stats?.events || 0}</h3>
-          <p className="text-primary-100">Total Events</p>
+          <p className="text-primary-100">{t('admin.totalEvents')}</p>
         </div>
 
         <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
@@ -93,14 +95,14 @@ const AdminDashboard = () => {
             <Shield className="h-8 w-8 opacity-80" />
             <TrendingUp className="h-5 w-5 opacity-60" />
           </div>
-          <h3 className="text-2xl font-bold mb-1">Active</h3>
-          <p className="text-purple-100">System Status</p>
+          <h3 className="text-2xl font-bold mb-1">{t('admin.active')}</h3>
+          <p className="text-purple-100">{t('admin.systemStatus')}</p>
         </div>
       </div>
 
       {/* Category Management */}
       <div className="card mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Category Management</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('admin.categoryMgmt')}</h2>
 
         {categorySuccess && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-2">
@@ -121,7 +123,7 @@ const AdminDashboard = () => {
             type="text"
             value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-            placeholder="Enter category name"
+            placeholder={t('admin.categoryPlaceholder')}
             className="input-field flex-1"
           />
           <button
@@ -130,12 +132,12 @@ const AdminDashboard = () => {
             className="btn-primary flex items-center space-x-2 disabled:opacity-50"
           >
             <PlusCircle className="h-5 w-5" />
-            <span>{creatingCategory ? 'Creating...' : 'Create Category'}</span>
+            <span>{creatingCategory ? t('admin.creatingCategory') : t('admin.createCategory')}</span>
           </button>
         </form>
 
         <p className="text-sm text-gray-600 mt-3">
-          Create categories to organize events better. Examples: Music, Tech, Sports, Arts, etc.
+          {t('admin.categoryHint')}
         </p>
       </div>
 
@@ -143,9 +145,9 @@ const AdminDashboard = () => {
       <div className="card">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">User Management</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">{t('admin.userMgmtTitle')}</h2>
             <p className="text-gray-600">
-              View, search, and manage all platform users — roles, lock status, and organizer access.
+              {t('admin.userMgmtDesc')}
             </p>
           </div>
           <Link
@@ -153,7 +155,7 @@ const AdminDashboard = () => {
             className="btn-primary flex items-center gap-2 whitespace-nowrap"
           >
             <Users className="h-5 w-5" />
-            <span>Manage Users</span>
+            <span>{t('admin.manageUsers')}</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

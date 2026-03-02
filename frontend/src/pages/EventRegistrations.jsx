@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import organizerService from '../services/organizerService'
+import { useLanguage } from '../contexts/LanguageContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import {
@@ -16,6 +17,7 @@ const STATUS_STYLES = {
 const EventRegistrations = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useLanguage()
     const [registrations, setRegistrations] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -29,30 +31,28 @@ const EventRegistrations = () => {
             setRegistrations(data)
         } catch (err) {
             if (err?.response?.status === 403) {
-                setError('Access denied. You are not the organizer of this event.')
+                setError(t('eventRegistrations.accessDenied'))
             } else if (err?.response?.status === 404) {
-                setError('Event not found.')
+                setError(t('eventRegistrations.eventNotFound'))
             } else {
-                setError(err?.response?.data?.message || 'Failed to load registrations')
+                setError(err?.response?.data?.message || t('eventRegistrations.failedToLoad'))
             }
         } finally {
             setLoading(false)
         }
-    }, [id])
+    }, [id, t])
 
     useEffect(() => {
         loadRegistrations()
     }, [loadRegistrations])
 
     const handleMarkPaid = async (registrationId) => {
-        // Prevent double click
         if (markingPaidId) return
         setMarkingPaidId(registrationId)
         setError('')
 
         try {
             await organizerService.markPaid(registrationId)
-            // Update local state immediately
             setRegistrations((prev) =>
                 prev.map((reg) =>
                     reg.id === registrationId ? { ...reg, status: 'PAID' } : reg
@@ -60,9 +60,9 @@ const EventRegistrations = () => {
             )
         } catch (err) {
             if (err?.response?.status === 403) {
-                setError('Access denied.')
+                setError(t('eventRegistrations.accessDeniedAction'))
             } else {
-                setError(err?.response?.data?.message || 'Failed to mark as paid')
+                setError(err?.response?.data?.message || t('eventRegistrations.failedToMarkPaid'))
             }
         } finally {
             setMarkingPaidId(null)
@@ -70,7 +70,7 @@ const EventRegistrations = () => {
     }
 
     const formatPrice = (price) => {
-        if (!price || price === 0) return 'Free'
+        if (!price || price === 0) return t('common.free')
         return `${(price / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} ₸`
     }
 
@@ -88,15 +88,15 @@ const EventRegistrations = () => {
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6"
             >
                 <ArrowLeft className="h-5 w-5" />
-                <span>Back</span>
+                <span>{t('common.back')}</span>
             </button>
 
             {/* Header */}
             <div className="flex items-center space-x-3 mb-6">
                 <Users className="h-8 w-8 text-primary-600" />
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Event Registrations</h1>
-                    <p className="text-gray-600">Manage registrations for this event</p>
+                    <h1 className="text-3xl font-bold text-gray-900">{t('eventRegistrations.title')}</h1>
+                    <p className="text-gray-600">{t('eventRegistrations.subtitle')}</p>
                 </div>
             </div>
 
@@ -106,19 +106,19 @@ const EventRegistrations = () => {
             {!loading && registrations.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div className="card bg-gradient-to-br from-blue-50 to-blue-100 text-center py-4">
-                        <p className="text-sm text-blue-600 font-medium">Total</p>
+                        <p className="text-sm text-blue-600 font-medium">{t('eventRegistrations.total')}</p>
                         <p className="text-2xl font-bold text-blue-900">{total}</p>
                     </div>
                     <div className="card bg-gradient-to-br from-indigo-50 to-indigo-100 text-center py-4">
-                        <p className="text-sm text-indigo-600 font-medium">Active</p>
+                        <p className="text-sm text-indigo-600 font-medium">{t('eventRegistrations.active')}</p>
                         <p className="text-2xl font-bold text-indigo-900">{active}</p>
                     </div>
                     <div className="card bg-gradient-to-br from-green-50 to-green-100 text-center py-4">
-                        <p className="text-sm text-green-600 font-medium">Paid</p>
+                        <p className="text-sm text-green-600 font-medium">{t('eventRegistrations.paid')}</p>
                         <p className="text-2xl font-bold text-green-900">{paid}</p>
                     </div>
                     <div className="card bg-gradient-to-br from-red-50 to-red-100 text-center py-4">
-                        <p className="text-sm text-red-600 font-medium">Cancelled</p>
+                        <p className="text-sm text-red-600 font-medium">{t('eventRegistrations.cancelled')}</p>
                         <p className="text-2xl font-bold text-red-900">{cancelled}</p>
                     </div>
                 </div>
@@ -133,8 +133,8 @@ const EventRegistrations = () => {
                 /* Empty state */
                 <div className="text-center py-12 card">
                     <Users className="h-24 w-24 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">No registrations yet</h3>
-                    <p className="text-gray-600">No one has registered for this event yet</p>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('eventRegistrations.noRegistrationsYet')}</h3>
+                    <p className="text-gray-600">{t('eventRegistrations.noRegistrationsDesc')}</p>
                 </div>
             ) : (
                 /* Registrations table */
@@ -143,11 +143,11 @@ const EventRegistrations = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-200">
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">#</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Event</th>
-                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Status</th>
-                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">Price</th>
-                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">{t('eventRegistrations.colNumber')}</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">{t('eventRegistrations.colEvent')}</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">{t('eventRegistrations.colStatus')}</th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">{t('eventRegistrations.colPrice')}</th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">{t('eventRegistrations.colActions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -157,7 +157,9 @@ const EventRegistrations = () => {
 
                                         <td className="py-3 px-4">
                                             <p className="text-sm font-medium text-gray-900">{reg.eventTitle}</p>
-                                            <p className="text-xs text-gray-500">Registration #{reg.id}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {t('eventRegistrations.registrationId').replace('{{id}}', reg.id)}
+                                            </p>
                                         </td>
 
                                         <td className="py-3 px-4">
@@ -180,19 +182,19 @@ const EventRegistrations = () => {
                                                     {markingPaidId === reg.id ? (
                                                         <>
                                                             <Loader2 className="h-3 w-3 animate-spin" />
-                                                            <span>Processing…</span>
+                                                            <span>{t('common.processing')}</span>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <DollarSign className="h-3 w-3" />
-                                                            <span>Mark Paid</span>
+                                                            <span>{t('eventRegistrations.markPaid')}</span>
                                                         </>
                                                     )}
                                                 </button>
                                             ) : reg.status === 'PAID' ? (
                                                 <span className="inline-flex items-center space-x-1 text-xs text-green-700 font-medium">
                                                     <CheckCircle className="h-3 w-3" />
-                                                    <span>Paid</span>
+                                                    <span>{t('eventRegistrations.paidStatus')}</span>
                                                 </span>
                                             ) : (
                                                 <span className="text-xs text-gray-400">—</span>

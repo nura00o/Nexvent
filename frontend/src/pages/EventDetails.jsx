@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import eventService from '../services/eventService'
 import organizerService from '../services/organizerService'
 import registrationService from '../services/registrationService'
@@ -16,6 +17,7 @@ import { format } from 'date-fns'
 const EventDetails = () => {
   const { id } = useParams()
   const { user, isAuthenticated, isAdmin, isOrganizer } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
 
   // ── Event state ────────────────────────────────────────────────────────
@@ -26,6 +28,9 @@ const EventDetails = () => {
   // ── Delete state ──────────────────────────────────────────────────────
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  // ── Cancel registration confirm modal ──────────────────────────────────
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   // ── Registration state ─────────────────────────────────────────────────
   const [registrationId, setRegistrationId] = useState(null)
@@ -41,11 +46,11 @@ const EventDetails = () => {
       const data = await eventService.getEvent(id)
       setEvent(data)
     } catch {
-      setError('Failed to load event details')
+      setError(t('events.failedToLoad'))
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, t])
 
   // ── Load user's existing registration for this event ───────────────────
   const loadRegistrationStatus = useCallback(async () => {
@@ -79,7 +84,7 @@ const EventDetails = () => {
       setRegistrationStatus(dto.status)
     } catch (err) {
       setRegError(
-        err?.response?.data?.message || err?.message || 'Registration failed'
+        err?.response?.data?.message || err?.message || t('events.registrationFailed')
       )
     } finally {
       setRegLoading(false)
@@ -88,7 +93,7 @@ const EventDetails = () => {
 
   // ── Cancel registration ────────────────────────────────────────────────
   const handleCancelRegistration = async () => {
-    if (!window.confirm('Are you sure you want to cancel your registration?')) return
+    setShowCancelModal(false)
     setRegLoading(true)
     setRegError('')
     try {
@@ -97,7 +102,7 @@ const EventDetails = () => {
       setRegistrationStatus(null)
     } catch (err) {
       setRegError(
-        err?.response?.data?.message || err?.message || 'Failed to cancel registration'
+        err?.response?.data?.message || err?.message || t('events.failedToCancelReg')
       )
     } finally {
       setRegLoading(false)
@@ -111,7 +116,7 @@ const EventDetails = () => {
       await organizerService.deleteEvent(id)
       navigate('/my-events')
     } catch (err) {
-      setError('Failed to delete event: ' + (err.response?.data?.message || err.message))
+      setError(t('events.failedToDelete') + ': ' + (err.response?.data?.message || err.message))
       setShowDeleteModal(false)
     } finally {
       setDeleting(false)
@@ -120,7 +125,7 @@ const EventDetails = () => {
 
   // ── Helpers ────────────────────────────────────────────────────────────
   const formatDate = (dateString) => {
-    if (!dateString) return 'Date TBA'
+    if (!dateString) return t('common.dateTba')
     try {
       return format(new Date(dateString), 'EEEE, MMMM dd, yyyy')
     } catch {
@@ -129,7 +134,7 @@ const EventDetails = () => {
   }
 
   const formatPrice = (price) => {
-    if (!price || price === 0) return 'Free'
+    if (!price || price === 0) return t('common.free')
     return `${(price / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₸`
   }
 
@@ -154,11 +159,11 @@ const EventDetails = () => {
   if (error || !event) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Event not found</h3>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('events.eventNotFound')}</h3>
         <p className="text-gray-600 mb-4">
-          {error || 'The event you are looking for does not exist'}
+          {error || t('events.eventNotFoundDesc')}
         </p>
-        <Link to="/" className="btn-primary">Back to Events</Link>
+        <Link to="/" className="btn-primary">{t('events.backToEvents')}</Link>
       </div>
     )
   }
@@ -173,14 +178,27 @@ const EventDetails = () => {
       {/* Delete confirmation modal */}
       <ConfirmModal
         open={showDeleteModal}
-        title="Delete Event"
-        message="Are you sure you want to delete this event? This action cannot be undone. All registrations will be permanently removed."
-        confirmText="Delete Event"
-        cancelText="Cancel"
+        title={t('events.deleteEvent')}
+        message={t('events.deleteEventConfirm')}
+        confirmText={t('events.deleteEvent')}
+        cancelText={t('common.cancel')}
         danger
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteModal(false)}
+      />
+
+      {/* Cancel registration confirmation modal */}
+      <ConfirmModal
+        open={showCancelModal}
+        title={t('events.cancelRegistration')}
+        message={t('events.cancelRegConfirm')}
+        confirmText={t('events.cancelRegistration')}
+        cancelText={t('common.cancel')}
+        danger
+        loading={regLoading}
+        onConfirm={handleCancelRegistration}
+        onCancel={() => setShowCancelModal(false)}
       />
 
       {/* Back */}
@@ -189,7 +207,7 @@ const EventDetails = () => {
         className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft className="h-5 w-5" />
-        <span>Back</span>
+        <span>{t('common.back')}</span>
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -223,7 +241,7 @@ const EventDetails = () => {
           {/* Description */}
           {event.description && (
             <div className="card mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-3">About this event</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-3">{t('events.aboutEvent')}</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
             </div>
           )}
@@ -231,29 +249,29 @@ const EventDetails = () => {
           {/* Organizer Actions */}
           {isEventOrganizer && (
             <div className="card bg-primary-50 border-2 border-primary-200">
-              <h3 className="font-bold text-gray-900 mb-3">Event Management</h3>
-              <p className="text-sm text-gray-600 mb-4">You are the organizer of this event</p>
+              <h3 className="font-bold text-gray-900 mb-3">{t('events.eventManagement')}</h3>
+              <p className="text-sm text-gray-600 mb-4">{t('events.youAreOrganizer')}</p>
               <div className="flex flex-wrap gap-3">
                 <Link
                   to={`/events/edit/${event.id}`}
                   className="btn-primary flex items-center space-x-2"
                 >
                   <Edit className="h-4 w-4" />
-                  <span>Edit Event</span>
+                  <span>{t('events.editEvent')}</span>
                 </Link>
                 <Link
                   to={`/events/${event.id}/registrations`}
                   className="btn-secondary flex items-center space-x-2"
                 >
                   <Users className="h-4 w-4" />
-                  <span>View Registrations</span>
+                  <span>{t('events.viewRegistrations')}</span>
                 </Link>
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   className="btn-danger flex items-center space-x-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  <span>Delete Event</span>
+                  <span>{t('events.deleteEvent')}</span>
                 </button>
               </div>
             </div>
@@ -263,13 +281,13 @@ const EventDetails = () => {
         {/* ── Sidebar ── */}
         <div className="lg:col-span-1">
           <div className="card sticky top-20">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Event Details</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{t('events.eventDetails')}</h2>
 
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <Calendar className="h-5 w-5 text-primary-600 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-medium text-gray-900">Date</p>
+                  <p className="font-medium text-gray-900">{t('events.date')}</p>
                   <p className="text-gray-600">{formatDate(event.date)}</p>
                 </div>
               </div>
@@ -278,7 +296,7 @@ const EventDetails = () => {
                 <div className="flex items-start space-x-3">
                   <Clock className="h-5 w-5 text-primary-600 flex-shrink-0 mt-1" />
                   <div>
-                    <p className="font-medium text-gray-900">Time</p>
+                    <p className="font-medium text-gray-900">{t('events.time')}</p>
                     <p className="text-gray-600">{event.time}</p>
                   </div>
                 </div>
@@ -288,14 +306,14 @@ const EventDetails = () => {
                 <div className="flex items-start space-x-3">
                   <MapPin className="h-5 w-5 text-primary-600 flex-shrink-0 mt-1" />
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">Location</p>
+                    <p className="font-medium text-gray-900">{t('events.location')}</p>
                     <p className="text-gray-600">{event.location}</p>
                     {event.latitude && event.longitude && (
                       <button
                         onClick={openInMaps}
                         className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1 mt-1"
                       >
-                        <span>View on map</span>
+                        <span>{t('events.viewOnMap')}</span>
                         <ExternalLink className="h-3 w-3" />
                       </button>
                     )}
@@ -307,8 +325,8 @@ const EventDetails = () => {
                 <div className="flex items-start space-x-3">
                   <Users className="h-5 w-5 text-primary-600 flex-shrink-0 mt-1" />
                   <div>
-                    <p className="font-medium text-gray-900">Capacity</p>
-                    <p className="text-gray-600">{event.capacity} attendees</p>
+                    <p className="font-medium text-gray-900">{t('events.capacity')}</p>
+                    <p className="text-gray-600">{event.capacity} {t('events.attendees')}</p>
                   </div>
                 </div>
               )}
@@ -317,7 +335,7 @@ const EventDetails = () => {
               <div className="flex items-start space-x-3">
                 <DollarSign className="h-5 w-5 text-primary-600 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-medium text-gray-900">Price</p>
+                  <p className="font-medium text-gray-900">{t('events.price')}</p>
                   <p className={`font-semibold ${event.price ? 'text-gray-900' : 'text-green-600'}`}>
                     {formatPrice(event.price)}
                   </p>
@@ -332,12 +350,12 @@ const EventDetails = () => {
                   <EyeOff className="h-5 w-5 text-amber-600 flex-shrink-0 mt-1" />
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">Status</p>
+                  <p className="font-medium text-gray-900">{t('events.status')}</p>
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${event.published
                     ? 'bg-green-100 text-green-800'
                     : 'bg-amber-100 text-amber-800'
                     }`}>
-                    {event.published ? 'Published' : 'Draft'}
+                    {event.published ? t('events.published') : t('events.draft')}
                   </span>
                 </div>
               </div>
@@ -360,12 +378,12 @@ const EventDetails = () => {
                       {regLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Registering…</span>
+                          <span>{t('events.registering')}</span>
                         </>
                       ) : (
                         <>
                           <CheckCircle className="h-4 w-4" />
-                          <span>Register for Event</span>
+                          <span>{t('events.register')}</span>
                         </>
                       )}
                     </button>
@@ -375,22 +393,22 @@ const EventDetails = () => {
                     <>
                       <div className="flex items-center space-x-2 text-green-700 text-sm font-medium">
                         <CheckCircle className="h-4 w-4" />
-                        <span>You are registered for this event</span>
+                        <span>{t('events.youAreRegistered')}</span>
                       </div>
                       <button
-                        onClick={handleCancelRegistration}
+                        onClick={() => setShowCancelModal(true)}
                         disabled={regLoading}
                         className="w-full btn-secondary text-red-600 hover:bg-red-50 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {regLoading ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Cancelling…</span>
+                            <span>{t('events.cancelling')}</span>
                           </>
                         ) : (
                           <>
                             <XCircle className="h-4 w-4" />
-                            <span>Cancel Registration</span>
+                            <span>{t('events.cancelRegistration')}</span>
                           </>
                         )}
                       </button>
@@ -400,7 +418,7 @@ const EventDetails = () => {
                   {registrationStatus === 'PAID' && (
                     <div className="flex items-center space-x-2 text-blue-700 text-sm font-medium">
                       <CheckCircle className="h-4 w-4" />
-                      <span>Registration confirmed &amp; paid</span>
+                      <span>{t('events.registrationPaid')}</span>
                     </div>
                   )}
                 </>
@@ -408,7 +426,7 @@ const EventDetails = () => {
 
               {!isAuthenticated() && (
                 <Link to="/login" className="w-full btn-primary block text-center">
-                  Log in to Register
+                  {t('events.logInToRegister')}
                 </Link>
               )}
             </div>

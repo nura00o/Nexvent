@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import adminService, { ROLES, ALL_ROLES, ROLE_LABELS } from '../services/adminService'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import ConfirmModal from '../components/ConfirmModal'
@@ -26,7 +27,7 @@ const roleBadgeClass = (role) => {
 
 /* ─────────────────── Roles Modal ─────────────────── */
 
-const RolesModal = ({ open, user, onSave, onCancel, loading }) => {
+const RolesModal = ({ open, user, onSave, onCancel, loading, t }) => {
     const [selected, setSelected] = useState([])
 
     useEffect(() => {
@@ -51,7 +52,7 @@ const RolesModal = ({ open, user, onSave, onCancel, loading }) => {
                     <X className="h-5 w-5" />
                 </button>
 
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Edit Roles</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">{t('admin.editRolesTitle')}</h3>
                 <p className="text-sm text-gray-500 mb-5">
                     {user.fullName} ({user.email})
                 </p>
@@ -81,20 +82,20 @@ const RolesModal = ({ open, user, onSave, onCancel, loading }) => {
 
                 {!canSave && (
                     <p className="text-sm text-red-600 mb-3 flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" /> At least one role is required
+                        <AlertCircle className="h-4 w-4" /> {t('admin.atLeastOneRole')}
                     </p>
                 )}
 
                 <div className="flex justify-end gap-3">
                     <button onClick={onCancel} disabled={loading} className="btn-secondary disabled:opacity-50">
-                        Cancel
+                        {t('common.cancel')}
                     </button>
                     <button
                         onClick={() => onSave(user.id, selected)}
                         disabled={!canSave || loading}
                         className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Saving…' : 'Save Roles'}
+                        {loading ? t('common.saving') : t('admin.saveRoles')}
                     </button>
                 </div>
             </div>
@@ -106,6 +107,7 @@ const RolesModal = ({ open, user, onSave, onCancel, loading }) => {
 
 const AdminUsers = () => {
     const { user: currentUser } = useAuth()
+    const { t } = useLanguage()
 
     // ── data ──
     const [users, setUsers] = useState([])
@@ -134,14 +136,14 @@ const AdminUsers = () => {
             setUsers(data)
         } catch (err) {
             if (err?.response?.status === 403) {
-                setError('Access denied. You do not have admin privileges.')
+                setError(t('admin.accessDenied'))
             } else {
                 setError(err)
             }
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [t])
 
     useEffect(() => { loadUsers() }, [loadUsers])
 
@@ -158,8 +160,8 @@ const AdminUsers = () => {
     const handleLock = (user) => {
         setConfirm({
             open: true,
-            title: 'Lock User',
-            message: `Are you sure you want to lock "${user.fullName}"? They will not be able to log in.`,
+            title: t('admin.lockTitle'),
+            message: t('admin.lockMessage').replace('{{name}}', user.fullName),
             danger: true,
             action: async () => {
                 markBusy(user.id)
@@ -167,7 +169,7 @@ const AdminUsers = () => {
                     const updated = await adminService.lockUser(user.id)
                     patchUser(updated)
                 } catch (err) {
-                    setError(err?.response?.data?.message || 'Failed to lock user')
+                    setError(err?.response?.data?.message || t('admin.failedLock'))
                 } finally {
                     clearBusy(user.id)
                 }
@@ -181,7 +183,7 @@ const AdminUsers = () => {
             const updated = await adminService.unlockUser(user.id)
             patchUser(updated)
         } catch (err) {
-            setError(err?.response?.data?.message || 'Failed to unlock user')
+            setError(err?.response?.data?.message || t('admin.failedUnlock'))
         } finally {
             clearBusy(user.id)
         }
@@ -193,7 +195,7 @@ const AdminUsers = () => {
             const updated = await adminService.grantOrganizer(user.id)
             patchUser(updated)
         } catch (err) {
-            setError(err?.response?.data?.message || 'Failed to grant organizer')
+            setError(err?.response?.data?.message || t('admin.failedGrantOrg'))
         } finally {
             clearBusy(user.id)
         }
@@ -202,8 +204,8 @@ const AdminUsers = () => {
     const handleRevokeOrganizer = (user) => {
         setConfirm({
             open: true,
-            title: 'Revoke Organizer',
-            message: `Remove organizer role from "${user.fullName}"? They will lose access to organizer features.`,
+            title: t('admin.revokeTitle'),
+            message: t('admin.revokeMessage').replace('{{name}}', user.fullName),
             danger: true,
             action: async () => {
                 markBusy(user.id)
@@ -211,7 +213,7 @@ const AdminUsers = () => {
                     const updated = await adminService.revokeOrganizer(user.id)
                     patchUser(updated)
                 } catch (err) {
-                    setError(err?.response?.data?.message || 'Failed to revoke organizer')
+                    setError(err?.response?.data?.message || t('admin.failedRevokeOrg'))
                 } finally {
                     clearBusy(user.id)
                 }
@@ -226,7 +228,7 @@ const AdminUsers = () => {
             patchUser(updated)
             setRolesModal({ open: false, user: null })
         } catch (err) {
-            setError(err?.response?.data?.message || 'Failed to update roles')
+            setError(err?.response?.data?.message || t('admin.failedUpdateRoles'))
         } finally {
             setRolesSaving(false)
         }
@@ -271,8 +273,10 @@ const AdminUsers = () => {
                 <div className="flex items-center gap-3">
                     <Users className="h-8 w-8 text-primary-600" />
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-                        <p className="text-gray-600">{users.length} users total</p>
+                        <h1 className="text-3xl font-bold text-gray-900">{t('admin.pageTitle')}</h1>
+                        <p className="text-gray-600">
+                            {t('admin.usersTotal').replace('{{count}}', users.length)}
+                        </p>
                     </div>
                 </div>
 
@@ -282,13 +286,13 @@ const AdminUsers = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search users…"
+                            placeholder={t('admin.searchPlaceholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="input-field pl-9 w-56"
                         />
                     </div>
-                    <button onClick={loadUsers} className="btn-secondary flex items-center gap-1" title="Refresh">
+                    <button onClick={loadUsers} className="btn-secondary flex items-center gap-1" title={t('common.refresh')}>
                         <RefreshCw className="h-4 w-4" />
                     </button>
                 </div>
@@ -302,10 +306,10 @@ const AdminUsers = () => {
                 <div className="card text-center py-12">
                     <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-700 mb-1">
-                        {search ? 'No users match your search' : 'No users found'}
+                        {search ? t('admin.noUsersMatch') : t('admin.noUsersFound')}
                     </h3>
                     <p className="text-gray-500 text-sm">
-                        {search ? 'Try a different search term.' : 'Users will appear here once they register.'}
+                        {search ? t('admin.tryDifferentSearch') : t('admin.usersWillAppear')}
                     </p>
                 </div>
             )}
@@ -316,12 +320,12 @@ const AdminUsers = () => {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="border-b border-gray-200 bg-gray-50">
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Full Name</th>
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Roles</th>
-                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('admin.colId')}</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('admin.colEmail')}</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('admin.colFullName')}</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('admin.colStatus')}</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('admin.colRoles')}</th>
+                                <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">{t('admin.colActions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -345,17 +349,17 @@ const AdminUsers = () => {
                                             <div className="flex flex-wrap gap-1">
                                                 {u.locked && (
                                                     <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-200">
-                                                        <Lock className="h-3 w-3" /> Locked
+                                                        <Lock className="h-3 w-3" /> {t('admin.statusLocked')}
                                                     </span>
                                                 )}
                                                 {!u.enabled && (
                                                     <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                                        Disabled
+                                                        {t('admin.statusDisabled')}
                                                     </span>
                                                 )}
                                                 {u.enabled && !u.locked && (
                                                     <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800 border border-green-200">
-                                                        Active
+                                                        {t('admin.statusActive')}
                                                     </span>
                                                 )}
                                             </div>
@@ -385,9 +389,9 @@ const AdminUsers = () => {
                                                     className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg
                                      text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200
                                      disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                    title="Edit roles"
+                                                    title={t('admin.editRolesTitle')}
                                                 >
-                                                    <Edit3 className="h-3.5 w-3.5" /> Roles
+                                                    <Edit3 className="h-3.5 w-3.5" /> {t('admin.btnRoles')}
                                                 </button>
 
                                                 {/* Lock / Unlock */}
@@ -398,9 +402,9 @@ const AdminUsers = () => {
                                                         className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg
                                        text-green-700 bg-green-50 hover:bg-green-100 border border-green-200
                                        disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                        title="Unlock user"
+                                                        title={t('admin.unlockUser')}
                                                     >
-                                                        <Unlock className="h-3.5 w-3.5" /> Unlock
+                                                        <Unlock className="h-3.5 w-3.5" /> {t('admin.btnUnlock')}
                                                     </button>
                                                 ) : (
                                                     <button
@@ -409,9 +413,9 @@ const AdminUsers = () => {
                                                         className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg
                                        text-red-700 bg-red-50 hover:bg-red-100 border border-red-200
                                        disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                        title={isSelf ? 'Cannot lock yourself' : 'Lock user'}
+                                                        title={isSelf ? t('admin.cannotLockSelf') : t('admin.lockUser')}
                                                     >
-                                                        <Lock className="h-3.5 w-3.5" /> Lock
+                                                        <Lock className="h-3.5 w-3.5" /> {t('admin.btnLock')}
                                                     </button>
                                                 )}
 
@@ -424,9 +428,9 @@ const AdminUsers = () => {
                                                             className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg
                                          text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200
                                          disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                            title="Revoke organizer"
+                                                            title={t('admin.revokeTitle')}
                                                         >
-                                                            <UserX className="h-3.5 w-3.5" /> Revoke Org
+                                                            <UserX className="h-3.5 w-3.5" /> {t('admin.btnRevokeOrg')}
                                                         </button>
                                                     ) : (
                                                         <button
@@ -435,9 +439,9 @@ const AdminUsers = () => {
                                                             className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg
                                          text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200
                                          disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                                            title="Grant organizer"
+                                                            title={t('admin.btnGrantOrg')}
                                                         >
-                                                            <UserCheck className="h-3.5 w-3.5" /> Grant Org
+                                                            <UserCheck className="h-3.5 w-3.5" /> {t('admin.btnGrantOrg')}
                                                         </button>
                                                     )
                                                 )}
@@ -458,6 +462,7 @@ const AdminUsers = () => {
                 onSave={handleSaveRoles}
                 onCancel={() => setRolesModal({ open: false, user: null })}
                 loading={rolesSaving}
+                t={t}
             />
 
             {/* Confirm Modal */}
@@ -467,6 +472,8 @@ const AdminUsers = () => {
                 message={confirm.message}
                 danger={confirm.danger}
                 loading={confirmLoading}
+                confirmText={t('common.confirm')}
+                cancelText={t('common.cancel')}
                 onConfirm={executeConfirm}
                 onCancel={() => setConfirm({ open: false, title: '', message: '', danger: false, action: null })}
             />

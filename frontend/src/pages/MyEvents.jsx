@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import organizerService from '../services/organizerService'
+import { useLanguage } from '../contexts/LanguageContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import ConfirmModal from '../components/ConfirmModal'
@@ -14,6 +15,7 @@ const PAGE_SIZE = 12
 
 const MyEvents = () => {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -36,11 +38,11 @@ const MyEvents = () => {
       setTotalPages(response.totalPages || 0)
       setTotalElements(response.totalElements || 0)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load your events')
+      setError(err?.response?.data?.message || t('myEvents.failedToLoad'))
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [page, t])
 
   useEffect(() => {
     loadMyEvents()
@@ -53,14 +55,13 @@ const MyEvents = () => {
     try {
       await organizerService.deleteEvent(deleteTarget.id)
       setDeleteTarget(null)
-      // Refetch current page; go back if we deleted the last item on this page
       if (events.length === 1 && page > 0) {
         setPage((p) => p - 1)
       } else {
         loadMyEvents()
       }
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to delete event')
+      setError(err?.response?.data?.message || t('myEvents.failedToDelete'))
       setDeleteTarget(null)
     } finally {
       setDeleting(false)
@@ -68,7 +69,7 @@ const MyEvents = () => {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'TBA'
+    if (!dateString) return t('common.dateTba')
     try {
       return format(new Date(dateString), 'MMM dd, yyyy')
     } catch {
@@ -77,7 +78,7 @@ const MyEvents = () => {
   }
 
   const formatPrice = (price) => {
-    if (!price || price === 0) return 'Free'
+    if (!price || price === 0) return t('common.free')
     return `${(price / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} ₸`
   }
 
@@ -86,9 +87,10 @@ const MyEvents = () => {
       {/* Delete Modal */}
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete Event"
-        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('myEvents.deleteModalTitle')}
+        message={t('myEvents.deleteModalMessage').replace('{{title}}', deleteTarget?.title || '')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         danger
         loading={deleting}
         onConfirm={handleDelete}
@@ -98,16 +100,16 @@ const MyEvents = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Events</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('myEvents.title')}</h1>
           <p className="text-gray-600">
             {totalElements > 0
-              ? `${totalElements} event${totalElements !== 1 ? 's' : ''} total`
-              : 'Manage your organized events'}
+              ? t('myEvents.totalEvents_other').replace('{{count}}', totalElements)
+              : t('myEvents.manageYourEvents')}
           </p>
         </div>
         <Link to="/events/create" className="btn-primary flex items-center space-x-2">
           <PlusCircle className="h-5 w-5" />
-          <span>Create Event</span>
+          <span>{t('myEvents.createEvent')}</span>
         </Link>
       </div>
 
@@ -121,11 +123,11 @@ const MyEvents = () => {
       ) : events.length === 0 ? (
         <div className="text-center py-12 card">
           <Calendar className="h-24 w-24 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">No events yet</h3>
-          <p className="text-gray-600 mb-6">Start by creating your first event</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('myEvents.noEventsYet')}</h3>
+          <p className="text-gray-600 mb-6">{t('myEvents.noEventsDesc')}</p>
           <Link to="/events/create" className="btn-primary inline-flex items-center space-x-2">
             <PlusCircle className="h-5 w-5" />
-            <span>Create Your First Event</span>
+            <span>{t('myEvents.createFirstEvent')}</span>
           </Link>
         </div>
       ) : (
@@ -136,11 +138,11 @@ const MyEvents = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Event</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Date</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Price</th>
-                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Status</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">{t('myEvents.colEvent')}</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">{t('myEvents.colDate')}</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">{t('myEvents.colPrice')}</th>
+                    <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">{t('myEvents.colStatus')}</th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">{t('myEvents.colActions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -175,12 +177,12 @@ const MyEvents = () => {
                         {event.published ? (
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             <Eye className="h-3 w-3" />
-                            <span>Published</span>
+                            <span>{t('myEvents.published')}</span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                             <EyeOff className="h-3 w-3" />
-                            <span>Draft</span>
+                            <span>{t('myEvents.draft')}</span>
                           </span>
                         )}
                       </td>
@@ -191,28 +193,28 @@ const MyEvents = () => {
                           <button
                             onClick={() => navigate(`/events/edit/${event.id}`)}
                             className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                            title="Edit event"
+                            title={t('common.edit')}
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => navigate(`/events/${event.id}/registrations`)}
                             className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View registrations"
+                            title={t('events.viewRegistrations')}
                           >
                             <Users className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => navigate(`/events/${event.id}/analytics`)}
                             className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                            title="Analytics"
+                            title={t('analytics.viewAnalytics')}
                           >
                             <BarChart3 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => setDeleteTarget(event)}
                             className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete event"
+                            title={t('common.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -229,7 +231,7 @@ const MyEvents = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <p className="text-sm text-gray-600">
-                Page {page + 1} of {totalPages}
+                {t('common.pageOf').replace('{{page}}', page + 1).replace('{{total}}', totalPages)}
               </p>
               <div className="flex items-center space-x-2">
                 <button
@@ -238,14 +240,14 @@ const MyEvents = () => {
                   className="btn-secondary flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Previous</span>
+                  <span>{t('common.previous')}</span>
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={page >= totalPages - 1}
                   className="btn-secondary flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Next</span>
+                  <span>{t('common.next')}</span>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

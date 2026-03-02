@@ -1,232 +1,217 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import registrationService from '../services/registrationService';
-import { useLanguage } from '../contexts/LanguageContext';
-import { Calendar, DollarSign, XCircle, CheckCircle, AlertCircle } from 'lucide-react';
-import ErrorMessage from '../components/ErrorMessage';
+import React, { useState, useEffect, useCallback } from 'react'
+import registrationService from '../services/registrationService'
+import { useLanguage } from '../contexts/LanguageContext'
+import LoadingSpinner from '../components/LoadingSpinner'
+import ErrorMessage from '../components/ErrorMessage'
+import ConfirmModal from '../components/ConfirmModal'
+import { Calendar, CheckCircle, XCircle, DollarSign, AlertCircle, Loader2 } from 'lucide-react'
+import { format } from 'date-fns'
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
 const STATUS_STYLES = {
-  REGISTERED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100  text-red-800',
-  PAID: 'bg-blue-100 text-blue-800',
-};
+  REGISTERED: 'bg-blue-100 text-blue-800 border border-blue-200',
+  PAID: 'bg-green-100 text-green-800 border border-green-200',
+  CANCELLED: 'bg-red-100 text-red-800 border border-red-200',
+}
 
-const StatusBadge = ({ status }) => (
-  <span
-    className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_STYLES[status] ?? 'bg-gray-100 text-gray-800'
-      }`}
-  >
-    {status}
-  </span>
-);
-
-// ─── Loading skeleton ─────────────────────────────────────────────────────────
-const RegistrationSkeleton = () => (
-  <div className="space-y-4" aria-busy="true" aria-label="Loading registrations">
-    {[1, 2, 3].map((i) => (
-      <div key={i} className="card animate-pulse">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 space-y-3">
-            <div className="h-5 bg-gray-200 rounded w-2/3" />
-            <div className="h-4 bg-gray-200 rounded w-1/4" />
-            <div className="h-4 bg-gray-200 rounded w-1/3" />
-          </div>
-          <div className="flex flex-col space-y-2 ml-4">
-            <div className="h-9 bg-gray-200 rounded w-28" />
-            <div className="h-9 bg-gray-200 rounded w-28" />
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-const EmptyState = ({ t }) => (
-  <div className="card text-center py-12">
-    <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-    <p className="text-gray-600">
-      {t('registration.noRegistrations') || 'You have no registrations yet.'}
-    </p>
-  </div>
-);
-
-// ─── Main component ───────────────────────────────────────────────────────────
 const MyRegistrations = () => {
-  const [registrations, setRegistrations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  // Per-row action loading: { [registrationId]: 'cancel' | 'markPaid' | null }
-  const [actionLoading, setActionLoading] = useState({});
+  const { t } = useLanguage()
+  const [registrations, setRegistrations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [cancelTarget, setCancelTarget] = useState(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [markingPaidId, setMarkingPaidId] = useState(null)
 
-  const { t } = useLanguage();
-  const { isAdmin, isOrganizer } = useAuth();
-  const navigate = useNavigate();
-
-  const canMarkPaid = isAdmin() || isOrganizer();
-
-  // ── Fetch ────────────────────────────────────────────────────────────────
-  const fetchRegistrations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadRegistrations = useCallback(async () => {
+    setLoading(true)
+    setError('')
     try {
-      const data = await registrationService.getMyRegistrations();
-      setRegistrations(data);
+      const data = await registrationService.getMyRegistrations()
+      setRegistrations(data)
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Failed to load registrations');
+      setError(err?.message || t('myRegistrations.failedToLoad'))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [t])
 
   useEffect(() => {
-    fetchRegistrations();
-  }, [fetchRegistrations]);
+    loadRegistrations()
+  }, [loadRegistrations])
 
-  // ── Cancel ───────────────────────────────────────────────────────────────
-  const handleCancel = async (registrationId) => {
-    const confirmed = window.confirm(
-      t('registration.cancellationConfirm') ||
-      'Are you sure you want to cancel this registration?'
-    );
-    if (!confirmed) return;
-
-    setActionLoading((prev) => ({ ...prev, [registrationId]: 'cancel' }));
+  const handleCancel = async () => {
+    if (!cancelTarget) return
+    setCancelling(true)
     try {
-      await registrationService.cancelRegistration(registrationId);
+      await registrationService.cancelRegistration(cancelTarget.id)
       setRegistrations((prev) =>
         prev.map((r) =>
-          r.id === registrationId ? { ...r, status: 'CANCELLED' } : r
+          r.id === cancelTarget.id ? { ...r, status: 'CANCELLED' } : r
         )
-      );
+      )
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Failed to cancel registration');
+      setError(err?.message || t('myRegistrations.failedToCancel'))
     } finally {
-      setActionLoading((prev) => ({ ...prev, [registrationId]: null }));
+      setCancelling(false)
+      setCancelTarget(null)
     }
-  };
+  }
 
-  // ── Mark Paid ────────────────────────────────────────────────────────────
-  const handleMarkPaid = async (registrationId) => {
-    setActionLoading((prev) => ({ ...prev, [registrationId]: 'markPaid' }));
+  const handleMarkPaid = async (regId) => {
+    if (markingPaidId) return
+    setMarkingPaidId(regId)
+    setError('')
     try {
-      await registrationService.markPaid(registrationId);
+      await registrationService.markPaid(regId)
       setRegistrations((prev) =>
-        prev.map((r) =>
-          r.id === registrationId ? { ...r, status: 'PAID' } : r
-        )
-      );
+        prev.map((r) => (r.id === regId ? { ...r, status: 'PAID' } : r))
+      )
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Failed to mark as paid');
+      setError(err?.message || t('myRegistrations.failedToMarkPaid'))
     } finally {
-      setActionLoading((prev) => ({ ...prev, [registrationId]: null }));
+      setMarkingPaidId(null)
     }
-  };
+  }
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  const formatDate = (dateString) => {
+    if (!dateString) return t('common.dateTba')
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy HH:mm')
+    } catch {
+      return dateString
+    }
+  }
+
+  const formatPrice = (price) => {
+    if (!price || price === 0) return t('myRegistrations.free')
+    return `${(price / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} ₸`
+  }
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'REGISTERED': return t('myRegistrations.statusRegistered')
+      case 'CANCELLED': return t('myRegistrations.statusCancelled')
+      case 'PAID': return t('myRegistrations.statusPaid')
+      default: return status
+    }
+  }
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {t('registration.myRegistrations') || 'My Registrations'}
-        </h1>
-      </div>
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('myRegistrations.myRegistrations')}</h1>
 
-      {error && (
-        <ErrorMessage error={error} onClose={() => setError(null)} />
-      )}
+      {/* Cancel Confirm Modal */}
+      <ConfirmModal
+        open={!!cancelTarget}
+        title={t('events.cancelRegistration')}
+        message={t('myRegistrations.cancellationConfirm')}
+        confirmText={t('events.cancelRegistration')}
+        cancelText={t('common.cancel')}
+        danger
+        loading={cancelling}
+        onConfirm={handleCancel}
+        onCancel={() => setCancelTarget(null)}
+      />
+
+      <ErrorMessage error={error} onClose={() => setError('')} />
 
       {loading ? (
-        <RegistrationSkeleton />
+        <div className="py-12">
+          <LoadingSpinner size="large" />
+        </div>
       ) : registrations.length === 0 ? (
-        <EmptyState t={t} />
+        <div className="text-center py-12 card">
+          <Calendar className="h-24 w-24 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">{t('myRegistrations.noRegistrations')}</h3>
+        </div>
       ) : (
         <div className="space-y-4">
-          {registrations.map((reg) => {
-            const rowAction = actionLoading[reg.id];
-            const isCancelling = rowAction === 'cancel';
-            const isMarkingPaid = rowAction === 'markPaid';
-            const isBusy = Boolean(rowAction);
+          {registrations.map((r) => (
+            <div key={r.id} className="card">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">{r.eventTitle}</h3>
 
-            return (
-              <div key={reg.id} className="card hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between gap-4">
-                  {/* Left: info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <h3
-                        className="text-xl font-semibold text-gray-900 hover:text-primary-600 cursor-pointer truncate"
-                        onClick={() => navigate(`/events/${reg.eventId}`)}
-                      >
-                        {reg.eventTitle}
-                      </h3>
-                      <StatusBadge status={reg.status} />
-                    </div>
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    {/* Status Badge */}
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[r.status] || 'bg-gray-100 text-gray-700'}`}>
+                      {getStatusLabel(r.status)}
+                    </span>
 
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 flex-shrink-0" />
-                      <span>
-                        {t('registration.price') || 'Price'}:{' '}
-                        <span className="font-medium text-gray-900">
-                          {reg.unitPrice != null
-                            ? `${reg.unitPrice.toLocaleString()} ₸`
-                            : t('registration.free') || 'Free'}
-                        </span>
-                      </span>
-                    </div>
+                    {/* Price */}
+                    <span className="flex items-center gap-1 text-sm text-gray-600">
+                      <DollarSign className="h-3.5 w-3.5 text-primary-500" />
+                      {formatPrice(r.unitPrice)}
+                    </span>
                   </div>
 
-                  {/* Right: actions */}
-                  <div className="flex flex-col space-y-2 flex-shrink-0">
-                    {reg.status === 'REGISTERED' && (
-                      <button
-                        onClick={() => handleCancel(reg.id)}
-                        disabled={isBusy}
-                        className="btn-secondary text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1"
-                        aria-label={`Cancel registration for ${reg.eventTitle}`}
-                      >
-                        <XCircle className="h-4 w-4" />
-                        <span>
-                          {isCancelling
-                            ? t('common.cancelling') || 'Cancelling…'
-                            : t('events.cancelRegistration') || 'Cancel'}
-                        </span>
-                      </button>
+                  {/* Registration date */}
+                  <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500">
+                    {r.registeredAt && (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        {t('myRegistrations.registeredAt')}: {formatDate(r.registeredAt)}
+                      </span>
                     )}
-
-                    {canMarkPaid && reg.status === 'REGISTERED' && (
-                      <button
-                        onClick={() => handleMarkPaid(reg.id)}
-                        disabled={isBusy}
-                        className="btn-secondary text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1"
-                        aria-label={`Mark registration ${reg.id} as paid`}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        <span>
-                          {isMarkingPaid
-                            ? t('common.saving') || 'Saving…'
-                            : t('registration.markPaid') || 'Mark as Paid'}
-                        </span>
-                      </button>
+                    {r.cancelledAt && (
+                      <span className="flex items-center gap-1 text-red-500">
+                        <XCircle className="h-3 w-3" />
+                        {t('myRegistrations.cancelledAt')}: {formatDate(r.cancelledAt)}
+                      </span>
                     )}
-
-                    <button
-                      onClick={() => navigate(`/events/${reg.eventId}`)}
-                      className="btn-secondary"
-                    >
-                      {t('common.viewDetails') || 'View Details'}
-                    </button>
                   </div>
                 </div>
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  {r.status === 'REGISTERED' && (
+                    <>
+                      <button
+                        onClick={() => handleMarkPaid(r.id)}
+                        disabled={markingPaidId === r.id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {markingPaidId === r.id ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            {t('common.processing')}
+                          </>
+                        ) : (
+                          <>
+                            <DollarSign className="h-3 w-3" />
+                            {t('myRegistrations.markPaid')}
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setCancelTarget(r)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+                      >
+                        <XCircle className="h-3 w-3" />
+                        {t('events.cancelRegistration')}
+                      </button>
+                    </>
+                  )}
+                  {r.status === 'PAID' && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                      <CheckCircle className="h-4 w-4" />
+                      {t('myRegistrations.statusPaid')}
+                    </span>
+                  )}
+                  {r.status === 'CANCELLED' && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      {t('myRegistrations.statusCancelled')}
+                    </span>
+                  )}
+                </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default MyRegistrations;
+export default MyRegistrations
