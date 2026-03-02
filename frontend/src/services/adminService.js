@@ -92,11 +92,17 @@ const adminService = {
 
   // ── Stats / Categories (existing) ───────────────────
 
-  /** @returns {Promise<{users: number, events: number}>} */
-  getOverview: async () => {
-    const response = await api.get('/admin/stats/overview')
-    return response.data
-  },
+    /** @returns {Promise<{users: number, events: number, locked: number, tickets: number}>} */
+    getOverview: async () => {
+        const { data } = await api.get('/admin/stats/overview')
+
+        return {
+            users: data.usersTotal ?? 0,
+            events: data.eventsTotal ?? 0,
+            locked: data.usersLocked ?? 0,
+            tickets: data.ticketsTotal ?? 0,
+        }
+    },
 
   /**
    * @param {string} name

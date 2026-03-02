@@ -25,13 +25,24 @@ const registrationService = {
     return response.data
   },
 
+    getTicket: async (registrationId) => {
+        const res = await api.get(`/registrations/${registrationId}/ticket`)
+        return res.data
+    },
+    markPaid: async (registrationId) => {
+        const res = await api.patch(`/registrations/${registrationId}/mark-paid`);
+        return res.data;
+    },
+
+
   /**
    * PATCH /api/registrations/{registrationId}/cancel
    * Cancel a registration by its ID (not the event ID).
    * @param {number} registrationId
    */
   cancelRegistration: async (registrationId) => {
-    await api.patch(`/registrations/${registrationId}/cancel`)
+      const res = await api.patch(`/registrations/${registrationId}/cancel`);
+      return res.data;
   },
 }
 
