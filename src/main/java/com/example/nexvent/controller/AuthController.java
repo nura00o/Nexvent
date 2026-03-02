@@ -28,7 +28,6 @@ public class AuthController {
         return users.refresh(refreshToken);
     }
 
-    // Сброс пароля: отправка кода и подтверждение
     @PostMapping("/reset/start")
     public ResponseEntity<Void> startReset(@RequestBody ResetStartRequest req) {
         users.startReset(req);

@@ -1,5 +1,6 @@
 package com.example.nexvent.controller;
 
+import com.example.nexvent.dto.AdminStatsOverviewDto;
 import com.example.nexvent.dto.SetRolesRequest;
 import com.example.nexvent.dto.UserSummaryDto;
 import com.example.nexvent.service.AdminService;
@@ -45,5 +46,10 @@ public class AdminController {
     @PatchMapping("/users/{id}/unlock")
     public UserSummaryDto unlock(@PathVariable Long id) {
         return admin.unlockUser(id);
+    }
+
+    @GetMapping("/stats/overview")
+    public AdminStatsOverviewDto statsOverview() {
+        return admin.getOverview();
     }
 }

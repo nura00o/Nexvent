@@ -3,7 +3,6 @@ insert into roles(name) values ('ROLE_ADMIN') on conflict (name) do nothing;
 insert into roles(name) values ('ROLE_USER') on conflict (name) do nothing;
 insert into roles(name) values ('ROLE_ORGANIZER') on conflict (name) do nothing;
 
--- admin (без ручного id)
 with ins as (
 insert into users(email, password, full_name, enabled, locked)
 values (

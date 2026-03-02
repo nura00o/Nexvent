@@ -1,12 +1,15 @@
 package com.example.nexvent.service;
 
+import com.example.nexvent.dto.AdminStatsOverviewDto;
 import com.example.nexvent.dto.SetRolesRequest;
 import com.example.nexvent.dto.UserSummaryDto;
 import com.example.nexvent.model.Role;
 import com.example.nexvent.model.User;
+import com.example.nexvent.repository.EventRepository;
 import com.example.nexvent.repository.RoleRepository;
 import com.example.nexvent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -15,12 +18,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminService {
     private final UserRepository users;
     private final RoleRepository roles;
+    private final EventRepository events;
+
+    public AdminStatsOverviewDto getOverview() {
+        long u = users.count();
+        long e = events.count();
+        log.info("ADMIN OVERVIEW counts: users={}, events={}", u, e);
+
+        return new AdminStatsOverviewDto(u, users.countByLockedTrue(), e, 0L);
+    }
 
     private static final String R_USER = "ROLE_USER";
     private static final String R_ORG  = "ROLE_ORGANIZER";

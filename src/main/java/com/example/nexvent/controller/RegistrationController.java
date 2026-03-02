@@ -1,6 +1,7 @@
 package com.example.nexvent.controller;
 
 import com.example.nexvent.dto.RegistrationDto;
+import com.example.nexvent.dto.TicketDto;
 import com.example.nexvent.model.User;
 import com.example.nexvent.service.CurrentUser;
 import com.example.nexvent.service.RegistrationService;
@@ -42,5 +43,9 @@ public class RegistrationController {
     public void markPaid(@PathVariable Long registrationId, Authentication auth) {
         User me = currentUser.get(auth);
         registrationService.markPaid(registrationId, me);
+    }
+    @GetMapping("/{registrationId}/ticket")
+    public TicketDto getTicket(@PathVariable Long registrationId, Authentication auth) {
+        return registrationService.getTicketForRegistration(registrationId, auth);
     }
 }
